@@ -11,7 +11,7 @@ chatbat_routes.get("/whatsapp-webhook",AIChatBotController.verifyWebHooks);
 
 
 
-// chatbat_routes.post("/whatsapp-webhook",))   
+chatbat_routes.post("/whatsapp-webhook",AIChatBotController.receiveWhatsappQuery)   ;
 
 
 

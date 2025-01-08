@@ -40,6 +40,18 @@ class AIChatBotController {
         });
     }
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    static receiveWhatsappQuery(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const incomingMessage = req.body; //Request body
+                console.log("Incoming messagee Body : ", incomingMessage);
+            }
+            catch (error) {
+                res.status(500).json({ error });
+            }
+        });
+    }
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     static addData(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
