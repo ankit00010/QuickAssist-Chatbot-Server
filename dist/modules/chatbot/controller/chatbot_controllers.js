@@ -44,7 +44,7 @@ class AIChatBotController {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const incomingMessage = req.body; //Request body
-                console.log("Incoming messagee Body : ", incomingMessage);
+                console.log("Incoming Message Body:", JSON.stringify(incomingMessage, null, 2));
             }
             catch (error) {
                 res.status(500).json({ error });
