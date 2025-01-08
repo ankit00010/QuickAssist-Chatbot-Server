@@ -15,7 +15,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const error_1 = __importDefault(require("../../../middleware/error"));
 const database_1 = require("../../../config/database");
 const faq_model_1 = __importDefault(require("../models/faq_model"));
-class AIChatBotController {
+const chatbot_repository_1 = __importDefault(require("../repository/chatbot_repository"));
+const whatsapp_services_1 = __importDefault(require("../../../services/whatsapp_services"));
+class WhatsappChatbot {
     static verifyWebHooks(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             // Retrieve the verification token from environment variables
@@ -43,11 +45,91 @@ class AIChatBotController {
     static receiveWhatsappQuery(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const incomingMessage = req.body; //Request body
-                console.log("Incoming Message Body:", JSON.stringify(incomingMessage, null, 2));
+                // Extract the incoming message data from the request body
+                const incomingMessage = req.body;
+                // Extract the user message, phone number, name, and ID from the message data
+                const userMessage = incomingMessage.entry[0].changes[0].value.messages[0].text.body;
+                const phoneNumber = incomingMessage.entry[0].changes[0].value.messages[0].from;
+                const userName = incomingMessage.entry[0].changes[0].value.contacts[0].profile.name;
+                const userID = incomingMessage.entry[0].changes[0].value.metadata.phone_number_id;
+                let message;
+                // Check if both user message and phone number are provided
+                if (userMessage && phoneNumber) {
+                    // Verify if the user is already registered in the system
+                    const verifyUser = yield chatbot_repository_1.default.verifyUser(phoneNumber, userName, userID);
+                    // If the user is already registered
+                    if (typeof verifyUser === "boolean") {
+                        // Fetch the response for frequently asked questions (FAQ) based on the user's message
+                        const getQueryAns = yield chatbot_repository_1.default.fetchFAQResponse(userMessage);
+                        // If no response is found for the query, send a default response
+                        if (typeof getQueryAns === "boolean") {
+                            message = "Sorry, we couldn't find an answer to your question.";
+                            const sendMessage = yield whatsapp_services_1.default.sendCustomMessage(message, phoneNumber, userID);
+                            // Check if the message was successfully sent
+                            if (sendMessage === 200) {
+                                return res.status(200).json("Message sent Successfully!!!");
+                            }
+                            else {
+                                return res.status(500).json("Failed to send the message!!!");
+                            }
+                        }
+                        else {
+                            // If a response is found, send the answer to the user
+                            console.log(getQueryAns);
+                            const sendMessage = yield whatsapp_services_1.default.sendCustomMessage(getQueryAns.answer, phoneNumber, userID);
+                            console.log('Message sent successfully:', sendMessage);
+                            // Check if the message was successfully sent
+                            if (sendMessage === 200) {
+                                return res.status(200).json("Message sent Successfully!!!");
+                            }
+                            else {
+                                return res.status(500).json("Failed to send the message!!!");
+                            }
+                        }
+                    }
+                    else {
+                        // If the user is not registered, send a welcome message
+                        message = `Welcome ${userName} my name is Pacific. I am here to assist you with your query. How can I help you?`;
+                        const sendMessage = yield whatsapp_services_1.default.sendCustomMessage(message, phoneNumber, userID);
+                        console.log('Message sent successfully:', sendMessage);
+                        // Check if the message was successfully sent
+                        if (sendMessage === 200) {
+                            return res.status(200).json("Message sent Successfully!!!");
+                        }
+                        else {
+                            return res.status(500).json("Failed to send the message!!!");
+                        }
+                    }
+                }
+                else {
+                    return res.status(500).json("Failed to receive message");
+                }
             }
             catch (error) {
-                res.status(500).json({ error });
+                // Handle known errors from ThrowError class
+                if (error instanceof error_1.default) {
+                    res.status(error.code).json({
+                        code: error.code,
+                        title: error.title,
+                        message: error.message,
+                    });
+                }
+                else if (error instanceof Error) {
+                    // Handle unexpected errors
+                    res.status(500).json({
+                        code: 500,
+                        title: "Internal Server Error",
+                        message: error.message,
+                    });
+                }
+                else {
+                    // Handle unknown errors
+                    res.status(500).json({
+                        code: 500,
+                        title: "Internal Server Error",
+                        message: "An unknown error occurred",
+                    });
+                }
             }
         });
     }
@@ -103,4 +185,4 @@ class AIChatBotController {
         });
     }
 }
-exports.default = AIChatBotController;
+exports.default = WhatsappChatbot;
