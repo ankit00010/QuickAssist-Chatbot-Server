@@ -37,6 +37,30 @@ class AIChatBotController {
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+      
+    
+      static async receiveWhatsappQuery(
+        req: Request,
+        res: Response
+      ): Promise<any> {
+        try {
+            const incomingMessage=req.body;   //Request body
+
+            console.log("Incoming messagee Body : ",incomingMessage);
+            
+        } catch (error) {
+          res.status(500).json({ error });
+        }
+      }
+    
+    
+
+
+
+
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
