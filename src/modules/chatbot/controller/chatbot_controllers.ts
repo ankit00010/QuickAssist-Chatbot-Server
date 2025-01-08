@@ -16,7 +16,7 @@ class AIChatBotController {
         // Extract query parameters sent by the webhook provider
         const mode = req.query['hub.mode']; // The mode of the webhook request (e.g., 'subscribe')
         const token = req.query['hub.verify_token']; // The verification token provided by the webhook provider
-        const challenge = req.query['hub.challenge']; // The challenge code to be echoed back for verification
+        const challenge = req.query['hub.challenge']; // The challenge code to be  echoed back for verification
       
         // Check if the request is a subscription request and if the token matches the expected value
         if (mode === 'subscribe' && token === VERIFY_TOKEN) {
