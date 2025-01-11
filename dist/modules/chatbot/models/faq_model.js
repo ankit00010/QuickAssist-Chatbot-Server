@@ -4,6 +4,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const error_1 = __importDefault(require("../../../middleware/error"));
+//Dummy Json Data 
+// {
+//     "question": "Dummy question?",
+//     "answer": "Dummy answer",
+//     "keywords": [
+//         "dummyKeyword"
+//     ],
+//     "context": "dummy"
+// }
 /**
  * Represents an FAQ item with validation logic.
  */
