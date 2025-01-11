@@ -5,7 +5,10 @@ import { client } from "../../../config/database";
 import FaqInfo from "../models/faq_model";
 import WhatsappChatbotRepository from "../repository/chatbot_repository";
 import axios from "axios";
-import WhatsappService from "../../../services/whatsapp_services";
+import WhatsappService from "../../../services/chatbot_services";
+import Validatiors from "../validators/fields_validation";
+import { ObjectId } from "mongodb";
+import ChatBotUtils from "../../../utils/chatbot_utils";
 
 class WhatsappChatbot {
 
@@ -102,7 +105,7 @@ class WhatsappChatbot {
                     console.log('Message sent successfully:', sendMessage);
 
                     // Check if the message was successfully sent
-                    if (sendMessage=== 200) {
+                    if (sendMessage === 200) {
                         return res.status(200).json("Message sent Successfully!!!");
                     } else {
                         return res.status(500).json("Failed to send the message!!!");
@@ -162,7 +165,10 @@ class WhatsappChatbot {
             const db = client.db("master");
             new FaqInfo({ question, answer, keywords, context });
 
+            const totalDocs = await db.collection("faq_info").countDocuments();
+            const id = ChatBotUtils.generateDocumentId(totalDocs);
             const result = await db.collection("faq_info").insertOne({
+                faq_id: id,
                 question,
                 answer,
                 keywords,
@@ -203,6 +209,127 @@ class WhatsappChatbot {
         }
     }
 
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+    static async editData(
+        req: Request,
+        res: Response
+    ): Promise<any> {
+        try {
+
+
+            const { fields } = req.body;
+            const id = req.params.id;
+            console.log("Fields Data", fields);
+            console.log("Id :", id);
+
+            if (!id) {
+                throw new ThrowError(404, "Not Found", "No id provided");
+            }
+            const validateFields = Validatiors.validateFields(fields);
+
+            if (validateFields) {
+                return res.status(400).json({ status: 400, title: "Validation Error", message: validateFields })
+            }
+
+            console.log("After Validation status", validateFields);
+
+            const findData = await WhatsappChatbotRepository.findDataById(id);
+
+            if (findData === false) {
+                throw new ThrowError(404, "Not Found", "No Data by availabe");
+            }
+
+            const updateData = await WhatsappChatbotRepository.updateData(id, fields)
+
+            if (updateData === false) {
+                throw new ThrowError(500, "FAILURE", "Failed to update the data");
+            }
+
+            return res.status(201).json({ status: 200, title: "SUCCESS", message: "Successfully Updated the given Data" })
+        } catch (error) {
+            if (error instanceof ThrowError) {
+                res.status(error.code).json({
+                    code: error.code,
+                    title: error.title,
+                    message: error.message,
+                });
+            } else if (error instanceof Error) {
+                // Handle unexpected errors
+                res.status(500).json({
+                    code: 500,
+                    title: "Internal Server Error",
+                    message: error.message,
+                });
+            } else {
+                // Handle unknown errors
+                res.status(500).json({
+                    code: 500,
+                    title: "Internal Server Error",
+                    message: "An unknown error occurred",
+                });
+            }
+        }
+    }
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    //Delete faq Data 
+
+    static async deleteData(
+        req: Request,
+        res: Response
+    ): Promise<any> {
+        try {
+            const id = req.params.id;
+
+
+            //verify Data in a database
+            const verify = await WhatsappChatbotRepository.findDataById(id);
+
+
+            if (!verify) {
+                throw new ThrowError(404, "Not Found", "No Data found in a Database");
+
+            }
+
+            const deleteData = await WhatsappChatbotRepository.deleteFaqData(id);;
+
+
+            if (!deleteData) {
+                return res.status(500).json({code:500,title:"FAILURE",message:"Failed to Delete the Data from the Database"});
+
+            }
+
+            return res.status(200).json({code:200,title:"SUCCESSS",message:"Data Deleted Successfully"}); 
+
+        } catch (error) {
+            if (error instanceof ThrowError) {
+                res.status(error.code).json({
+                    code: error.code,
+                    title: error.title,
+                    message: error.message,
+                });
+            } else if (error instanceof Error) {
+                // Handle unexpected errors
+                res.status(500).json({
+                    code: 500,
+                    title: "Internal Server Error",
+                    message: error.message,
+                });
+            } else {
+                // Handle unknown errors
+                res.status(500).json({
+                    code: 500,
+                    title: "Internal Server Error",
+                    message: "An unknown error occurred",
+                });
+            }
+        }
+    }
 
 }
 
