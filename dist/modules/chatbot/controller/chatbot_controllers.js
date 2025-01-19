@@ -141,6 +141,7 @@ class WhatsappChatbot {
             try {
                 console.log("Adding Data...");
                 const { question, answer, keywords, context } = req.body;
+                console.log(req.body);
                 const db = database_1.client.db("master");
                 new faq_model_1.default({ question, answer, keywords, context });
                 const totalDocs = yield db.collection("faq_info").countDocuments();
@@ -160,7 +161,7 @@ class WhatsappChatbot {
                         message: "Failed to add the data in a database",
                     });
                 }
-                return res.status(200).json("Data added successfully to the database");
+                return res.status(200).json({ code: 200, title: "SUCCESS", message: "Data Added Successfully!!!" });
             }
             catch (error) {
                 if (error instanceof error_1.default) {

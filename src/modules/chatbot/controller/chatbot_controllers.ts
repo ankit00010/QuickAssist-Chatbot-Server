@@ -161,6 +161,7 @@ class WhatsappChatbot {
         try {
             console.log("Adding Data...");
             const { question, answer, keywords, context } = req.body;
+            console.log(req.body);
 
             const db = client.db("master");
             new FaqInfo({ question, answer, keywords, context });
@@ -183,7 +184,7 @@ class WhatsappChatbot {
                 });
             }
 
-            return res.status(200).json("Data added successfully to the database");
+            return res.status(200).json({ code: 200, title: "SUCCESS", message: "Data Added Successfully!!!" });
         } catch (error) {
             if (error instanceof ThrowError) {
                 res.status(error.code).json({
@@ -300,11 +301,11 @@ class WhatsappChatbot {
 
 
             if (!deleteData) {
-                return res.status(500).json({code:500,title:"FAILURE",message:"Failed to Delete the Data from the Database"});
+                return res.status(500).json({ code: 500, title: "FAILURE", message: "Failed to Delete the Data from the Database" });
 
             }
 
-            return res.status(200).json({code:200,title:"SUCCESSS",message:"Data Deleted Successfully"}); 
+            return res.status(200).json({ code: 200, title: "SUCCESSS", message: "Data Deleted Successfully" });
 
         } catch (error) {
             if (error instanceof ThrowError) {
