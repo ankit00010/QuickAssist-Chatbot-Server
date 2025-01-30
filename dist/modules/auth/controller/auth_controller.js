@@ -102,5 +102,46 @@ class AuthController {
             }
         });
     }
+    ////////////////////////////////////////////////////////////////////////////////
+    static verifyOtp(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const { otp } = req.body;
+                if (otp === undefined || typeof otp !== "number") {
+                    throw new error_1.default(400, "Validation Error", "OTP field is required and must be a number.");
+                }
+                const result = yield auth_repository_1.default.authOtpVerification(otp);
+                if (!result) {
+                    return res.status(401).json({ code: 401, title: "NOT AUTHORIZED", message: "Invalid Otp Entered" });
+                }
+                return res.status(200).json({ code: 200, title: "SUCCESS", message: "OTP verified successfully!!!" });
+            }
+            catch (error) {
+                if (error instanceof error_1.default) {
+                    res.status(error.code).json({
+                        code: error.code,
+                        title: error.title,
+                        message: error.message,
+                    });
+                }
+                else if (error instanceof Error) {
+                    // Handle unexpected errors
+                    res.status(500).json({
+                        code: 500,
+                        title: "Internal Server Error",
+                        message: error.message,
+                    });
+                }
+                else {
+                    // Handle unknown errors
+                    res.status(500).json({
+                        code: 500,
+                        title: "Internal Server Error",
+                        message: "An unknown error occurred",
+                    });
+                }
+            }
+        });
+    }
 }
 exports.default = AuthController;

@@ -108,6 +108,29 @@ class AuthRepository {
 
     }
 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    static async authOtpVerification(
+        otp: number
+    ): Promise<boolean> {
+
+        const db = await client.db("master");
+
+        const getOtp: any = await db.collection("verification_otps").findOne({});
+        console.log(getOtp?.otp);
+
+        if (getOtp && getOtp.otp !== null && getOtp.otp === otp) {
+            return true
+        }
+
+        return false
+
+
+    }
+
+
+
 
 
 
