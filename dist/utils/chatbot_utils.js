@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const nodemailer_1 = __importDefault(require("nodemailer"));
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 class ChatBotUtils {
     //To generate the id based on current year and  month
     static generateDocumentId(totalDocs) {
@@ -74,4 +75,13 @@ class ChatBotUtils {
         });
     }
 }
+//Generate Token
+ChatBotUtils.generateToken = () => {
+    const SECRET_KEY = process.env.JWT_SECRET || ""; // Use env for security
+    const EXPIRES_IN = "1h"; // Token expiration time
+    const payload = {
+        isAdmin: true, // or false
+    };
+    return jsonwebtoken_1.default.sign(payload, SECRET_KEY, { expiresIn: EXPIRES_IN });
+};
 exports.default = ChatBotUtils;

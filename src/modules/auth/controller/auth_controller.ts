@@ -132,11 +132,15 @@ class AuthController {
 
             const result = await AuthRepository.authOtpVerification(otp);
 
+
+
             if (!result) {
                 return res.status(401).json({ code: 401, title: "NOT AUTHORIZED", message: "Invalid Otp Entered" })
 
             }
-            return res.status(200).json({ code: 200, title: "SUCCESS", message: "OTP verified successfully!!!" })
+            const token = await ChatBotUtils.generateToken();
+
+            return res.status(200).json({ code: 200, title: "SUCCESS", message: "OTP verified successfully!!!", token })
 
 
         } catch (error) {

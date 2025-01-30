@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import ThrowError from '../middleware/error';
+import jwt from "jsonwebtoken";
 class ChatBotUtils {
 
 
@@ -83,6 +84,18 @@ class ChatBotUtils {
     }
 
 
+    //Generate Token
+
+    static generateToken = () => {
+
+        const SECRET_KEY = process.env.JWT_SECRET || ""; // Use env for security
+        const EXPIRES_IN = "1h"; // Token expiration time
+        const payload = {
+            isAdmin: true, // or false
+        };
+        return jwt.sign(payload, SECRET_KEY, { expiresIn: EXPIRES_IN });
+
+    }
 
 
 
