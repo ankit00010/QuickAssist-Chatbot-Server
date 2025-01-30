@@ -16,6 +16,8 @@ class AdminClassController {
         res: Response
     ): Promise<any> {
         try {
+
+           
             console.log("Adding Data...");
             const { question, answer, keywords, context } = req.body;
             console.log(req.body);

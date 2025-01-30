@@ -26,8 +26,8 @@ class AuthController {
 
 
             const generateMail = await ChatBotUtils.sendOtpMail(otp);
-            console.log("The REsponse from the generated EMail is:=>",generateMail);
-            
+            console.log("The REsponse from the generated EMail is:=>", generateMail);
+
             if (!generateMail) {
                 return res.status(500).json({ code: 500, title: "FAILURE", message: "Failed to send the mail" });
             }
@@ -114,6 +114,59 @@ class AuthController {
 
 
 
+    ////////////////////////////////////////////////////////////////////////////////
+
+
+    static async verifyOtp(
+        req: Request,
+        res: Response
+    ): Promise<any> {
+        try {
+            const { otp } = req.body;
+
+            if (otp === undefined || typeof otp !== "number") {
+                throw new ThrowError(400, "Validation Error", "OTP field is required and must be a number.");
+            }
+
+
+
+            const result = await AuthRepository.authOtpVerification(otp);
+
+
+
+            if (!result) {
+                return res.status(401).json({ code: 401, title: "NOT AUTHORIZED", message: "Invalid Otp Entered" })
+
+            }
+            const token = await ChatBotUtils.generateToken();
+
+            return res.status(200).json({ code: 200, title: "SUCCESS", message: "OTP verified successfully!!!", token })
+
+
+        } catch (error) {
+            if (error instanceof ThrowError) {
+                res.status(error.code).json({
+                    code: error.code,
+                    title: error.title,
+                    message: error.message,
+                });
+            } else if (error instanceof Error) {
+                // Handle unexpected errors
+                res.status(500).json({
+                    code: 500,
+                    title: "Internal Server Error",
+                    message: error.message,
+                });
+            } else {
+                // Handle unknown errors
+                res.status(500).json({
+                    code: 500,
+                    title: "Internal Server Error",
+                    message: "An unknown error occurred",
+                });
+            }
+        }
+    }
 
 
 

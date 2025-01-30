@@ -63,5 +63,17 @@ class AuthRepository {
             return otp;
         });
     }
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    static authOtpVerification(otp) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const db = yield database_1.client.db("master");
+            const getOtp = yield db.collection("verification_otps").findOne({});
+            console.log(getOtp === null || getOtp === void 0 ? void 0 : getOtp.otp);
+            if (getOtp && getOtp.otp !== null && getOtp.otp === otp) {
+                return true;
+            }
+            return false;
+        });
+    }
 }
 exports.default = AuthRepository;
