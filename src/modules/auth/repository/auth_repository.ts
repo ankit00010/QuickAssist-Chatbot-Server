@@ -83,30 +83,32 @@ class AuthRepository {
 
 
 
-    static async generateOtp(
-    ): Promise<any> {
-
-        const db = await client.db("master");
-
+    static async generateOtp(): Promise<any> {
+        const db = client.db("master"); 
+        const collection = db.collection("verification_otps");
+    
+        //Delete the previous otps if there is one
+        await collection.deleteMany({});
+    
+        // Generate OTP
         const otp = ChatBotUtils.generateOtp();
-
-        const otpDocument = {
+    
+        // Insert OTP with expiration time
+        const result = await collection.insertOne({
             otp,
-            createdAt: new Date() // Store the current timestamp
-        };
-        const tempOTP = await db.collection<any>("verification_otps").insertOne(otpDocument);
-
-        if (!tempOTP) {
-            throw new ThrowError(500, "FAILURE", "Something went wrong while generating the otp");
+            createdAt: new Date(),
+        });
+    
+        if (!result.acknowledged) {
+            throw new ThrowError(500, "FAILURE", "Something went wrong while generating the OTP");
         }
-        await db.collection('verification_otps').createIndex(
-            { "createdAt": 1 },
-            { expireAfterSeconds: 60 }
-        );
+    
+        // Ensure index exists for automatic expiration
+        await collection.createIndex({ createdAt: 1 }, { expireAfterSeconds:60});
+    
         return otp;
-
-
     }
+    
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
