@@ -49,17 +49,22 @@ class AuthRepository {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     static generateOtp() {
         return __awaiter(this, void 0, void 0, function* () {
-            const db = yield database_1.client.db("master");
+            const db = database_1.client.db("master");
+            const collection = db.collection("verification_otps");
+            //Delete the previous otps if there is one
+            yield collection.deleteMany({});
+            // Generate OTP
             const otp = chatbot_utils_1.default.generateOtp();
-            const otpDocument = {
+            // Insert OTP with expiration time
+            const result = yield collection.insertOne({
                 otp,
-                createdAt: new Date() // Store the current timestamp
-            };
-            const tempOTP = yield db.collection("verification_otps").insertOne(otpDocument);
-            if (!tempOTP) {
-                throw new error_1.default(500, "FAILURE", "Something went wrong while generating the otp");
+                createdAt: new Date(),
+            });
+            if (!result.acknowledged) {
+                throw new error_1.default(500, "FAILURE", "Something went wrong while generating the OTP");
             }
-            yield db.collection('verification_otps').createIndex({ "createdAt": 1 }, { expireAfterSeconds: 60 });
+            // Ensure index exists for automatic expiration
+            yield collection.createIndex({ createdAt: 1 }, { expireAfterSeconds: 60 });
             return otp;
         });
     }
