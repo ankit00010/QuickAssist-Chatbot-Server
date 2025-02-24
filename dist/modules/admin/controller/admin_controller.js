@@ -171,5 +171,47 @@ class AdminClassController {
             }
         });
     }
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    static getFaqs(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const { page, limit, category } = req.query;
+                const page_no = page ? parseInt(page, 10) : undefined;
+                const page_limit = limit ? parseInt(limit, 10) : undefined;
+                const req_category = category ? category : "";
+                if (page_no === undefined || page_limit === undefined) {
+                    throw new error_1.default(404, "FAILURE", "Invalid page or limit parameter or undefined category");
+                }
+                const getData = yield admin_repository_1.default.getFaqsData(page_no, page_limit, req_category);
+                console.log("Value got", getData);
+                return res.status(200).json({ code: 200, title: "SUCCESS", data: getData.getFaqsData, totalPages: getData.totalPages, page: page, totalItems: getData.totalItems });
+            }
+            catch (error) {
+                if (error instanceof error_1.default) {
+                    res.status(error.code).json({
+                        code: error.code,
+                        title: error.title,
+                        message: error.message,
+                    });
+                }
+                else if (error instanceof Error) {
+                    // Handle unexpected errors
+                    res.status(500).json({
+                        code: 500,
+                        title: "Internal Server Error",
+                        message: error.message,
+                    });
+                }
+                else {
+                    // Handle unknown errors
+                    res.status(500).json({
+                        code: 500,
+                        title: "Internal Server Error",
+                        message: "An unknown error occurred",
+                    });
+                }
+            }
+        });
+    }
 }
 exports.default = AdminClassController;
