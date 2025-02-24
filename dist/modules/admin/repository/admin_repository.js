@@ -48,5 +48,27 @@ class AdminRepository {
             return false;
         });
     }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    static getFaqsData(page, limit, category) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const db = yield database_1.client.db("master");
+            let filter = {};
+            if (category && category.trim() !== "") {
+                filter.context = category;
+            }
+            console.log("Filter is ", filter);
+            const getFaqsData = yield db.collection("faq_info").find(filter).skip((page - 1) * limit).limit(limit).project({ faq_id: 1, question: 1, answer: 1 }).toArray();
+            const totalItems = yield db.collection("faq_info").countDocuments(filter);
+            console.log("The data founded is", getFaqsData.length);
+            const totalPages = Math.ceil(totalItems / limit);
+            const data = {
+                page,
+                totalPages,
+                getFaqsData,
+                totalItems
+            };
+            return data;
+        });
+    }
 }
 exports.default = AdminRepository;

@@ -17,7 +17,7 @@ class AdminClassController {
     ): Promise<any> {
         try {
 
-           
+
             console.log("Adding Data...");
             const { question, answer, keywords, context } = req.body;
             console.log(req.body);
@@ -190,6 +190,57 @@ class AdminClassController {
             }
         }
     }
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    static async getFaqs(
+        req: Request,
+        res: Response
+    ): Promise<any> {
+        try {
+
+            const { page, limit, category } = req.query;
+
+            const page_no = page ? parseInt(page as string, 10) : undefined
+            const page_limit = limit ? parseInt(limit as string, 10) : undefined
+            const req_category = category ? category : ""
+            if (page_no === undefined || page_limit === undefined) {
+                throw new ThrowError(404, "FAILURE", "Invalid page or limit parameter or undefined category");
+            }
+
+            const getData: { totalPages: number, page: number, getFaqsData: any, totalItems: number } = await AdminRepository.getFaqsData(page_no, page_limit, req_category as string);
+
+
+
+            console.log("Value got", getData);
+
+            return res.status(200).json({ code: 200, title: "SUCCESS", data: getData.getFaqsData, totalPages: getData.totalPages, page: page, totalItems: getData.totalItems })
+
+
+        } catch (error) {
+            if (error instanceof ThrowError) {
+                res.status(error.code).json({
+                    code: error.code,
+                    title: error.title,
+                    message: error.message,
+                });
+            } else if (error instanceof Error) {
+                // Handle unexpected errors
+                res.status(500).json({
+                    code: 500,
+                    title: "Internal Server Error",
+                    message: error.message,
+                });
+            } else {
+                // Handle unknown errors
+                res.status(500).json({
+                    code: 500,
+                    title: "Internal Server Error",
+                    message: "An unknown error occurred",
+                });
+            }
+        }
+    }
+
 }
 export default AdminClassController;
 
@@ -212,4 +263,4 @@ export default AdminClassController;
 
 
 
-    
+
