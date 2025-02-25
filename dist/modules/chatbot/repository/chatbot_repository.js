@@ -66,6 +66,7 @@ class WhatsappChatbotRepository {
             });
             // If no data is found, return a default response
             if (!findData) {
+                yield db.collection("faq_questions").insertOne({ question: message });
                 return false;
             }
             // Return the found data
