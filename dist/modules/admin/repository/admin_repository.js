@@ -57,7 +57,7 @@ class AdminRepository {
                 filter.context = category;
             }
             console.log("Filter is ", filter);
-            const getFaqsData = yield db.collection("faq_info").find(filter).skip((page - 1) * limit).limit(limit).project({ faq_id: 1, question: 1, answer: 1 }).toArray();
+            const getFaqsData = yield db.collection("faq_info").find(filter).skip((page - 1) * limit).limit(limit).project({ faq_id: 1, question: 1, answer: 1, context: 1, keywords: 1 }).toArray();
             const totalItems = yield db.collection("faq_info").countDocuments(filter);
             console.log("The data founded is", getFaqsData.length);
             const totalPages = Math.ceil(totalItems / limit);

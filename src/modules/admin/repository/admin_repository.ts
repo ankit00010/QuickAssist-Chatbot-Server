@@ -89,7 +89,7 @@ class AdminRepository {
         }
         console.log("Filter is ", filter);
 
-        const getFaqsData = await db.collection("faq_info").find(filter).skip((page - 1) * limit).limit(limit).project({ faq_id: 1, question: 1, answer: 1 }).toArray();
+        const getFaqsData = await db.collection("faq_info").find(filter).skip((page - 1) * limit).limit(limit).project({ faq_id: 1, question: 1, answer: 1 ,context:1,keywords:1}).toArray();
         const totalItems=await db.collection("faq_info").countDocuments(filter);
         console.log("The data founded is", getFaqsData.length)
 

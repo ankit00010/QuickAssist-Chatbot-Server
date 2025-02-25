@@ -23,6 +23,7 @@ class AdminClassController {
             console.log(req.body);
 
             const db = client.db("master");
+      
             new FaqInfo({ question, answer, keywords, context });
 
             const totalDocs = await db.collection("faq_info").countDocuments();
