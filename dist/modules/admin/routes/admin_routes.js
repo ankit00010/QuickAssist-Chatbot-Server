@@ -13,4 +13,5 @@ admin_routes.get("/faqs", admin_controller_1.default.getFaqs);
 admin_routes.post("/add-data", admin_controller_1.default.addData);
 admin_routes.put("/edit-data/:id", admin_controller_1.default.editData);
 admin_routes.delete("/delete-data/:id", admin_controller_1.default.deleteData);
+admin_routes.post("/admin-message", admin_controller_1.default.adminMessage);
 exports.default = admin_routes;

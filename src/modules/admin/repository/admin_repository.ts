@@ -1,6 +1,7 @@
 import { client } from "../../../config/database";
 import ThrowError from "../../../middleware/error";
 import { editFields } from "../../chatbot/models/faq_model";
+import { UserDetails, UserProps } from "../models/user_model";
 
 class AdminRepository {
 
@@ -89,12 +90,12 @@ class AdminRepository {
         }
         console.log("Filter is ", filter);
 
-        const getFaqsData = await db.collection("faq_info").find(filter).skip((page - 1) * limit).limit(limit).project({ faq_id: 1, question: 1, answer: 1 ,context:1,keywords:1}).toArray();
-        const totalItems=await db.collection("faq_info").countDocuments(filter);
+        const getFaqsData = await db.collection("faq_info").find(filter).skip((page - 1) * limit).limit(limit).project({ faq_id: 1, question: 1, answer: 1, context: 1, keywords: 1 }).toArray();
+        const totalItems = await db.collection("faq_info").countDocuments(filter);
         console.log("The data founded is", getFaqsData.length)
 
-   
-       
+
+
         const totalPages = Math.ceil(totalItems / limit);
         const data = {
             page,
@@ -103,6 +104,63 @@ class AdminRepository {
             totalItems
         }
         return data;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    static async getUsersCount(
+        message: string,
+    ): Promise<any> {
+
+        const db = await client.db("master");
+
+
+
+
+        const count = await db.collection("user_data").countDocuments();
+
+
+
+        console.log("The result is ", count);
+
+
+        // const getData = await db.collection<UserProps>("user_data").find({}).toArray();
+
+        // console.log("USER DATA => ", getData);
+
+
+        // if (getData === null) {
+        //     throw new ThrowError(500, "NO USER", "NO USER IN A DATABASE");
+        // }
+
+
+
+        return count
+
+
+        // const data
+        // return getData;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+    static async getUserDetails(
+        BATCH_SIZE: number,
+        BATCH_NO: number
+    ): Promise<UserDetails[]> {
+        const db = await client.db("master");
+
+        const user_data: UserDetails[] = await db.collection<UserDetails>("user_data")
+            .find({})
+            .skip(BATCH_NO * BATCH_SIZE)
+            .limit(BATCH_SIZE)
+            .project<UserDetails>({ _id: 0, phone_number: 1, user_id: 1 })
+            .toArray();
+
+        return user_data;
     }
 
 

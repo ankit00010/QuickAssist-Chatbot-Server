@@ -18,6 +18,7 @@ const error_1 = __importDefault(require("../../../middleware/error"));
 const fields_validation_1 = __importDefault(require("../../chatbot/validators/fields_validation"));
 const chatbot_utils_1 = __importDefault(require("../../../utils/chatbot_utils"));
 const admin_repository_1 = __importDefault(require("../repository/admin_repository"));
+const chatbot_services_1 = __importDefault(require("../../../services/chatbot_services"));
 class AdminClassController {
     static addData(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -210,6 +211,139 @@ class AdminClassController {
                         message: "An unknown error occurred",
                     });
                 }
+            }
+        });
+    }
+    // Separated error handling for cleaner code
+    static handleError(error, res) {
+        if (error instanceof error_1.default) {
+            return res.status(error.code).json({
+                code: error.code,
+                title: error.title,
+                message: error.message,
+            });
+        }
+        else if (error instanceof Error) {
+            return res.status(500).json({
+                code: 500,
+                title: "Internal Server Error",
+                message: error.message,
+            });
+        }
+        else {
+            return res.status(500).json({
+                code: 500,
+                title: "Internal Server Error",
+                message: "An unknown error occurred",
+            });
+        }
+    }
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // static async adminMessage(
+    //     req: Request,
+    //     res: Response
+    // ): Promise<any> {
+    //     try {
+    //         const { message } = req.body;
+    //         if (!message) {
+    //             throw new ThrowError(400, "VALIDATION ERROR", "EMPTY MESSAGE FIELD");
+    //         }
+    //         let BATCH_SIZE = 10;
+    //         const getCountData = await AdminRepository.getUsersCount(message);
+    //         //After Calculation of the counts we will start the process
+    //         if (getCountData < BATCH_SIZE) {
+    //             const BATCH_NO = 0;
+    //             const getUserDetails = await AdminRepository.getUserDetails(BATCH_SIZE, BATCH_NO);
+    //             const sendDataToManyUsers = await WhatsappService.sendMessageToAll(message, getUserDetails, BATCH_SIZE);
+    //             if (sendDataToManyUsers) {
+    //                 return res.status(200).json({ code: 200, title: "SUCCESS", message: "SUCCESSFULLY SENT THE MESSAGE" });
+    //             }
+    //             return res.status(500).json({ code: 500, title: "FAILURE", message: "FAILED TO SENT THE MESSAGE" });
+    //         } else {
+    //             let BATCH_NO = Math.ceil(getCountData.length / BATCH_SIZE);
+    //             for (let i = 0; i < BATCH_NO; i++) {
+    //                 const getUserDetails = await AdminRepository.getUserDetails(BATCH_SIZE, BATCH_NO);
+    //                 const sendDataToManyUsers = await WhatsappService.sendMessageToAll(message, getUserDetails, BATCH_SIZE);
+    //                 if (sendDataToManyUsers) {
+    //                     return res.status(200).json({ code: 200, title: "SUCCESS", message: "SUCCESSFULLY SENT THE MESSAGE" });
+    //                 }
+    //                 return res.status(500).json({ code: 500, title: "FAILURE", message: "FAILED TO SENT THE MESSAGE" });
+    //             }
+    //         }
+    //     } catch (error) {
+    //         if (error instanceof ThrowError) {
+    //             res.status(error.code).json({
+    //                 code: error.code,
+    //                 title: error.title,
+    //                 message: error.message,
+    //             });
+    //         } else if (error instanceof Error) {
+    //             // Handle unexpected errors
+    //             res.status(500).json({
+    //                 code: 500,
+    //                 title: "Internal Server Error",
+    //                 message: error.message,
+    //             });
+    //         } else {
+    //             // Handle unknown errors
+    //             res.status(500).json({
+    //                 code: 500,
+    //                 title: "Internal Server Error",
+    //                 message: "An unknown error occurred",
+    //             });
+    //         }
+    //     }
+    // }
+    static adminMessage(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const { message } = req.body;
+                if (!message) {
+                    throw new error_1.default(400, "VALIDATION ERROR", "EMPTY MESSAGE FIELD");
+                }
+                const BATCH_SIZE = 10;
+                const totalUsers = yield admin_repository_1.default.getUsersCount(message);
+                if (totalUsers <= 0) {
+                    return res.status(200).json({
+                        code: 200,
+                        title: "SUCCESS",
+                        message: "NO USERS TO SEND MESSAGES TO"
+                    });
+                }
+                // Calculate total batches needed
+                const totalBatches = Math.ceil(totalUsers / BATCH_SIZE);
+                let successCount = 0;
+                let failureCount = 0;
+                // Process batches in sequence to avoid overwhelming the database
+                for (let batchNo = 0; batchNo < totalBatches; batchNo++) {
+                    const userDetails = yield admin_repository_1.default.getUserDetails(BATCH_SIZE, batchNo);
+                    // Skip processing if no users returned in this batch
+                    if (!userDetails || userDetails.length === 0)
+                        continue;
+                    try {
+                        yield chatbot_services_1.default.sendMessageToAll(message, userDetails);
+                        successCount += userDetails.length;
+                    }
+                    catch (error) {
+                        failureCount += userDetails.length;
+                        console.error(`Failed to send messages for batch ${batchNo}:`, error);
+                        // Continue with next batch instead of failing entirely
+                    }
+                }
+                // Provide detailed response about the operation
+                return res.status(200).json({
+                    code: 200,
+                    title: "OPERATION COMPLETE",
+                    message: `SENT ${successCount} MESSAGES SUCCESSFULLY, ${failureCount} FAILED`,
+                    details: {
+                        totalUsers,
+                        successCount,
+                        failureCount
+                    }
+                });
+            }
+            catch (error) {
+                return this.handleError(error, res);
             }
         });
     }

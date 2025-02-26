@@ -41,5 +41,51 @@ class WhatsappService {
             }
         });
     }
+    static sendMessageToAll(message, userDataList) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const sendPromises = userDataList.map((userData, index) => {
+                    return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+                        try {
+                            // Stagger the messages to avoid rate limits
+                            setTimeout(() => __awaiter(this, void 0, void 0, function* () {
+                                try {
+                                    const response = yield axios_1.default.post(`https://graph.facebook.com/${process.env.VERSION}/${userData.user_id}/messages`, {
+                                        messaging_product: "whatsapp",
+                                        recipient_type: "individual",
+                                        to: userData.phone_number,
+                                        type: "text",
+                                        text: {
+                                            body: message,
+                                        },
+                                    }, {
+                                        headers: {
+                                            Authorization: `Bearer ${process.env.ACCESS_TOKEN}`,
+                                            "Content-Type": "application/json",
+                                        },
+                                    });
+                                    console.log(`MESSAGE SENT TO USER => ${userData.phone_number} and ${userData.user_id}`);
+                                    resolve();
+                                }
+                                catch (error) {
+                                    console.error(`Failed to send message to ${userData.phone_number}:`, error);
+                                    reject(error);
+                                }
+                            }), index * 500); // 500ms between each message
+                        }
+                        catch (timeoutError) {
+                            reject(timeoutError);
+                        }
+                    }));
+                });
+                yield Promise.all(sendPromises);
+                return true;
+            }
+            catch (error) {
+                console.error("Error sending messages:", error);
+                throw new error_1.default(500, "FAILURE", "Failed to send the messages");
+            }
+        });
+    }
 }
 exports.default = WhatsappService;

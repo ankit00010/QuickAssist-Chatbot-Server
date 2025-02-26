@@ -9,5 +9,4 @@ chatbat_routes.get("/whatsapp-webhook",WhatsappChatbot.verifyWebHooks);
 chatbat_routes.post("/whatsapp-webhook",WhatsappChatbot.receiveWhatsappQuery);
 
 
-
 export default chatbat_routes;
