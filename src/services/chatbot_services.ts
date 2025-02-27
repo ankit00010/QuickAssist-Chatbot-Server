@@ -43,6 +43,10 @@ class WhatsappService {
 
 
     }
+
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     static async sendMessageToAll(
         message: string,
         userDataList: Array<{ phone_number: string, user_id: string }>

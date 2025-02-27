@@ -41,6 +41,7 @@ class WhatsappService {
             }
         });
     }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     static sendMessageToAll(message, userDataList) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
