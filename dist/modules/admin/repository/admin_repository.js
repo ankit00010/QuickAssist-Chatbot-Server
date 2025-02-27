@@ -57,7 +57,7 @@ class AdminRepository {
                 filter.context = category;
             }
             console.log("Filter is ", filter);
-            const getFaqsData = yield db.collection("faq_info").find(filter).skip((page - 1) * limit).limit(limit).project({ faq_id: 1, question: 1, answer: 1 }).toArray();
+            const getFaqsData = yield db.collection("faq_info").find(filter).skip((page - 1) * limit).limit(limit).project({ faq_id: 1, question: 1, answer: 1, context: 1, keywords: 1 }).toArray();
             const totalItems = yield db.collection("faq_info").countDocuments(filter);
             console.log("The data founded is", getFaqsData.length);
             const totalPages = Math.ceil(totalItems / limit);
@@ -68,6 +68,35 @@ class AdminRepository {
                 totalItems
             };
             return data;
+        });
+    }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    static getUsersCount(message) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const db = yield database_1.client.db("master");
+            const count = yield db.collection("user_data").countDocuments();
+            console.log("The result is ", count);
+            // const getData = await db.collection<UserProps>("user_data").find({}).toArray();
+            // console.log("USER DATA => ", getData);
+            // if (getData === null) {
+            //     throw new ThrowError(500, "NO USER", "NO USER IN A DATABASE");
+            // }
+            return count;
+            // const data
+            // return getData;
+        });
+    }
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    static getUserDetails(BATCH_SIZE, BATCH_NO) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const db = yield database_1.client.db("master");
+            const user_data = yield db.collection("user_data")
+                .find({})
+                .skip(BATCH_NO * BATCH_SIZE)
+                .limit(BATCH_SIZE)
+                .project({ _id: 0, phone_number: 1, user_id: 1 })
+                .toArray();
+            return user_data;
         });
     }
 }

@@ -89,7 +89,7 @@ class ChatBotUtils {
     static generateToken = () => {
 
         const SECRET_KEY = process.env.JWT_SECRET || ""; // Use env for security
-        const EXPIRES_IN = "1h"; // Token expiration time
+        const EXPIRES_IN = "1d"; // Token expiration time
         const payload = {
             isAdmin: true, // or false
         };
