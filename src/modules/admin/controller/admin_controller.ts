@@ -31,7 +31,7 @@ class AdminClassController {
             const id = ChatBotUtils.generateDocumentId(totalDocs);
             const result = await db.collection("faq_info").insertOne({
                 faq_id: id,
-                question,
+                question: question.toLowerCase(),
                 answer,
                 keywords,
                 context,
@@ -209,13 +209,13 @@ class AdminClassController {
                 throw new ThrowError(404, "FAILURE", "Invalid page or limit parameter or undefined category");
             }
 
-            const getData: { totalPages: number, page: number, getFaqsData: any, totalItems: number } = await AdminRepository.getFaqsData(page_no, page_limit, req_category as string);
+            const getData: { totalPages: number, page: number, getFaqsData: any, totalItems: number, totalUnAnsweredQuestions: number } = await AdminRepository.getFaqsData(page_no, page_limit, req_category as string);
 
 
 
             console.log("Value got", getData);
 
-            return res.status(200).json({ code: 200, title: "SUCCESS", data: getData.getFaqsData, totalPages: getData.totalPages, page: page, totalItems: getData.totalItems })
+            return res.status(200).json({ code: 200, title: "SUCCESS", data: getData.getFaqsData, totalPages: getData.totalPages, page: page, totalItems: getData.totalItems, unAnsQuestionsCount: getData.totalUnAnsweredQuestions })
 
 
         } catch (error) {
@@ -403,6 +403,99 @@ class AdminClassController {
             return this.handleError(error, res);
         }
     }
+
+
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    static async questionsUnAnswered(
+        req: Request,
+        res: Response
+    ): Promise<any> {
+        try {
+
+            const { limit, user_Id } = req.body;
+
+
+            if (!limit && user_Id) {
+                throw new ThrowError(400, "INVALID REQUEST", "Both 'total_questions_asked' and 'user_ID' parameters are missing.");
+            }
+
+
+            const getData = await AdminRepository.getUnAnsweredData(limit, user_Id);
+
+            return res.status(200).json({ code: 200, tite: "SUCCESS", message: "Data received", data: getData });
+
+        } catch (error) {
+            if (error instanceof ThrowError) {
+                res.status(error.code).json({
+                    code: error.code,
+                    title: error.title,
+                    message: error.message,
+                });
+            } else if (error instanceof Error) {
+                // Handle unexpected errors
+                res.status(500).json({
+                    code: 500,
+                    title: "Internal Server Error",
+                    message: error.message,
+                });
+            } else {
+                // Handle unknown errors
+                res.status(500).json({
+                    code: 500,
+                    title: "Internal Server Error",
+                    message: "An unknown error occurred",
+                });
+            }
+        }
+    }
+
+
+    static async deleteQuestions(
+            req: Request,
+            res: Response
+          ): Promise<any> {
+            try {
+                
+                const {ids}=req.body;
+
+
+                if (ids.length===0) {
+                    throw new ThrowError(400,"EMPTY FIELDS","IDS provided are either empty or undefined");
+                }
+
+
+                const deleteData=await AdminRepository.deleteUnAnsweredQuestions(ids);
+
+
+            }  catch (error) {
+                if (error instanceof ThrowError) {
+                    res.status(error.code).json({
+                        code: error.code,
+                        title: error.title,
+                        message: error.message,
+                    });
+                } else if (error instanceof Error) {
+                    // Handle unexpected errors
+                    res.status(500).json({
+                        code: 500,
+                        title: "Internal Server Error",
+                        message: error.message,
+                    });
+                } else {
+                    // Handle unknown errors
+                    res.status(500).json({
+                        code: 500,
+                        title: "Internal Server Error",
+                        message: "An unknown error occurred",
+                    });
+                }
+            }
+            }
+        
 
 }
 export default AdminClassController;

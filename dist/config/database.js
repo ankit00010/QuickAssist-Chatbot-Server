@@ -9,8 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.client = void 0;
-exports.initalizeMongo = initalizeMongo;
+exports.client = exports.initalizeMongo = void 0;
 const mongodb_1 = require("mongodb");
 let client;
 function initalizeMongo() {
@@ -27,3 +26,4 @@ function initalizeMongo() {
         }
     });
 }
+exports.initalizeMongo = initalizeMongo;

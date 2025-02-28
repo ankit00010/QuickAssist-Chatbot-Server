@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import { client } from "../../../config/database";
 import ThrowError from "../../../middleware/error";
 import { editFields } from "../models/faq_model";
+import ChatBotUtils from "../../../utils/chatbot_utils";
 
 class WhatsappChatbotRepository {
 
@@ -75,10 +76,11 @@ class WhatsappChatbotRepository {
                 { keywords: { $in: messageWords } }
             ]
         });
-
+        const total: number = await db.collection('faq_questions').countDocuments();
+        const question_id = ChatBotUtils.generateDocumentId(total)
         // If no data is found, return a default response
         if (!findData) {
-            await db.collection("faq_questions").insertOne({question:message});
+            await db.collection("faq_questions").insertOne({ question_id: question_id, question: cleanedMessage.toLowerCase() });
             return false;
         }
 
@@ -89,8 +91,8 @@ class WhatsappChatbotRepository {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  
-    
+
+
 
 
 }

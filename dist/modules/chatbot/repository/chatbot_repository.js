@@ -14,6 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const database_1 = require("../../../config/database");
 const error_1 = __importDefault(require("../../../middleware/error"));
+const chatbot_utils_1 = __importDefault(require("../../../utils/chatbot_utils"));
 class WhatsappChatbotRepository {
     static verifyUser(phoneNumber, userName, user_id) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -64,9 +65,11 @@ class WhatsappChatbotRepository {
                     { keywords: { $in: messageWords } }
                 ]
             });
+            const total = yield db.collection('faq_questions').countDocuments();
+            const question_id = chatbot_utils_1.default.generateDocumentId(total);
             // If no data is found, return a default response
             if (!findData) {
-                yield db.collection("faq_questions").insertOne({ question: message });
+                yield db.collection("faq_questions").insertOne({ question_id: question_id, question: cleanedMessage.toLowerCase() });
                 return false;
             }
             // Return the found data
