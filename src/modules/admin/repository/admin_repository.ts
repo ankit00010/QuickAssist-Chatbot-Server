@@ -89,10 +89,12 @@ class AdminRepository {
 
         }
         console.log("Filter is ", filter);
-
+        const totalUnAnsweredQuestions = await db.collection("faq_questions").countDocuments();
         const getFaqsData = await db.collection("faq_info").find(filter).skip((page - 1) * limit).limit(limit).project({ faq_id: 1, question: 1, answer: 1, context: 1, keywords: 1 }).toArray();
         const totalItems = await db.collection("faq_info").countDocuments(filter);
         console.log("The data founded is", getFaqsData.length)
+
+        console.log("VALUE=> ", totalUnAnsweredQuestions);
 
 
 
@@ -101,7 +103,8 @@ class AdminRepository {
             page,
             totalPages,
             getFaqsData,
-            totalItems
+            totalItems,
+            totalUnAnsweredQuestions
         }
         return data;
     }
@@ -164,6 +167,53 @@ class AdminRepository {
     }
 
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+    static async getUnAnsweredData(
+        limit: number, user_Id: string
+    ): Promise<any[]> {
+        const db = await client.db("master");
+
+        const questions_list = await db.collection("faq_questions")
+            .find({ answers: { $exists: false }, lockedBy: { $in: [user_Id, null] } })
+            .sort({ created_at: 1 })
+            .limit(limit).toArray();
+
+
+
+        if (questions_list.length === 0) {
+            throw new ThrowError(500, "NO DATA FOUND", "No data is there");
+        }
+
+
+        const questionIds = questions_list.map(q => q._id);;
+
+        const lockingQuestions = await db.collection("faq_questions").updateMany(
+            { _id: { $in: questionIds } },
+            { $set: { lockedBy: user_Id, lockedAt: new Date() } }
+        )
+
+        if (!lockingQuestions.acknowledged) {
+            throw new ThrowError(500, "Failed To Lock", `Something went wrong while locking the questions under a given ${user_Id}`)
+        }
+        return questions_list;
+
+    }
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+    static async deleteUnAnsweredQuestions(
+        ids: string[]
+    ): Promise<any> {
+        const db = await client.db("master");
+
+
+        const deleteData = await db.collection("faq_questions").deleteMany({ question_id: { $in: ids } });
+
+    }
 
 }
 

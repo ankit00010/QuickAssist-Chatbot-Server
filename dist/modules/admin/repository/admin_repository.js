@@ -8,8 +8,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const database_1 = require("../../../config/database");
+const error_1 = __importDefault(require("../../../middleware/error"));
 class AdminRepository {
     //Find Data in a Database by Id
     static findDataById(id) {
@@ -57,15 +61,18 @@ class AdminRepository {
                 filter.context = category;
             }
             console.log("Filter is ", filter);
+            const totalUnAnsweredQuestions = yield db.collection("faq_questions").countDocuments();
             const getFaqsData = yield db.collection("faq_info").find(filter).skip((page - 1) * limit).limit(limit).project({ faq_id: 1, question: 1, answer: 1, context: 1, keywords: 1 }).toArray();
             const totalItems = yield db.collection("faq_info").countDocuments(filter);
             console.log("The data founded is", getFaqsData.length);
+            console.log("VALUE=> ", totalUnAnsweredQuestions);
             const totalPages = Math.ceil(totalItems / limit);
             const data = {
                 page,
                 totalPages,
                 getFaqsData,
-                totalItems
+                totalItems,
+                totalUnAnsweredQuestions
             };
             return data;
         });
@@ -97,6 +104,33 @@ class AdminRepository {
                 .project({ _id: 0, phone_number: 1, user_id: 1 })
                 .toArray();
             return user_data;
+        });
+    }
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    static getUnAnsweredData(limit, user_Id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const db = yield database_1.client.db("master");
+            const questions_list = yield db.collection("faq_questions")
+                .find({ answers: { $exists: false }, lockedBy: { $in: [user_Id, null] } })
+                .sort({ created_at: 1 })
+                .limit(limit).toArray();
+            if (questions_list.length === 0) {
+                throw new error_1.default(500, "NO DATA FOUND", "No data is there");
+            }
+            const questionIds = questions_list.map(q => q._id);
+            ;
+            const lockingQuestions = yield db.collection("faq_questions").updateMany({ _id: { $in: questionIds } }, { $set: { lockedBy: user_Id, lockedAt: new Date() } });
+            if (!lockingQuestions.acknowledged) {
+                throw new error_1.default(500, "Failed To Lock", `Something went wrong while locking the questions under a given ${user_Id}`);
+            }
+            return questions_list;
+        });
+    }
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    static deleteUnAnsweredQuestions(ids) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const db = yield database_1.client.db("master");
+            const deleteData = yield db.collection("faq_questions").deleteMany({ question_id: { $in: ids } });
         });
     }
 }

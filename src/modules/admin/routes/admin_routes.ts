@@ -13,5 +13,7 @@ admin_routes.post("/add-data", AdminClassController.addData);
 admin_routes.put("/edit-data/:id", AdminClassController.editData);
 admin_routes.delete("/delete-data/:id", AdminClassController.deleteData);
 admin_routes.post("/admin-message", AdminClassController.adminMessage);
+admin_routes.get("/questions/unanswered",AdminClassController.questionsUnAnswered);
+admin_routes.delete("/questions/unanswered/delete",AdminClassController.deleteQuestions)
 
 export default admin_routes;

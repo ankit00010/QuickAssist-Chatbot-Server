@@ -32,7 +32,7 @@ class AdminClassController {
                 const id = chatbot_utils_1.default.generateDocumentId(totalDocs);
                 const result = yield db.collection("faq_info").insertOne({
                     faq_id: id,
-                    question,
+                    question: question.toLowerCase(),
                     answer,
                     keywords,
                     context,
@@ -185,7 +185,7 @@ class AdminClassController {
                 }
                 const getData = yield admin_repository_1.default.getFaqsData(page_no, page_limit, req_category);
                 console.log("Value got", getData);
-                return res.status(200).json({ code: 200, title: "SUCCESS", data: getData.getFaqsData, totalPages: getData.totalPages, page: page, totalItems: getData.totalItems });
+                return res.status(200).json({ code: 200, title: "SUCCESS", data: getData.getFaqsData, totalPages: getData.totalPages, page: page, totalItems: getData.totalItems, unAnsQuestionsCount: getData.totalUnAnsweredQuestions });
             }
             catch (error) {
                 if (error instanceof error_1.default) {
@@ -344,6 +344,80 @@ class AdminClassController {
             }
             catch (error) {
                 return this.handleError(error, res);
+            }
+        });
+    }
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    static questionsUnAnswered(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const { limit, user_Id } = req.body;
+                if (!limit && user_Id) {
+                    throw new error_1.default(400, "INVALID REQUEST", "Both 'total_questions_asked' and 'user_ID' parameters are missing.");
+                }
+                const getData = yield admin_repository_1.default.getUnAnsweredData(limit, user_Id);
+                return res.status(200).json({ code: 200, tite: "SUCCESS", message: "Data received", data: getData });
+            }
+            catch (error) {
+                if (error instanceof error_1.default) {
+                    res.status(error.code).json({
+                        code: error.code,
+                        title: error.title,
+                        message: error.message,
+                    });
+                }
+                else if (error instanceof Error) {
+                    // Handle unexpected errors
+                    res.status(500).json({
+                        code: 500,
+                        title: "Internal Server Error",
+                        message: error.message,
+                    });
+                }
+                else {
+                    // Handle unknown errors
+                    res.status(500).json({
+                        code: 500,
+                        title: "Internal Server Error",
+                        message: "An unknown error occurred",
+                    });
+                }
+            }
+        });
+    }
+    static deleteQuestions(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const { ids } = req.body;
+                if (ids.length === 0) {
+                    throw new error_1.default(400, "EMPTY FIELDS", "IDS provided are either empty or undefined");
+                }
+                const deleteData = yield admin_repository_1.default.deleteUnAnsweredQuestions(ids);
+            }
+            catch (error) {
+                if (error instanceof error_1.default) {
+                    res.status(error.code).json({
+                        code: error.code,
+                        title: error.title,
+                        message: error.message,
+                    });
+                }
+                else if (error instanceof Error) {
+                    // Handle unexpected errors
+                    res.status(500).json({
+                        code: 500,
+                        title: "Internal Server Error",
+                        message: error.message,
+                    });
+                }
+                else {
+                    // Handle unknown errors
+                    res.status(500).json({
+                        code: 500,
+                        title: "Internal Server Error",
+                        message: "An unknown error occurred",
+                    });
+                }
             }
         });
     }
