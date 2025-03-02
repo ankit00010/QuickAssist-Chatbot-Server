@@ -1,4 +1,4 @@
-import { editFields, errorsProps, FaqInfoProps } from "../models/faq_model";
+import { editFields, errorsProps, FaqInfoProps } from "../../admin/models/faq_model";
 
 
 class Validatiors {

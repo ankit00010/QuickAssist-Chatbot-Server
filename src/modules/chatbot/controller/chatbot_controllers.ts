@@ -2,7 +2,7 @@ import { Request, response, Response } from "express";
 import ThrowError from "../../../middleware/error";
 import AIChatBotRepository from "../repository/chatbot_repository";
 import { client } from "../../../config/database";
-import FaqInfo from "../models/faq_model";
+import FaqInfo from "../../admin/models/faq_model";
 import WhatsappChatbotRepository from "../repository/chatbot_repository";
 import axios from "axios";
 import WhatsappService from "../../../services/chatbot_services";

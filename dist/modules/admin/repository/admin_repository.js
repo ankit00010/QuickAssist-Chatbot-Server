@@ -114,23 +114,38 @@ class AdminRepository {
                 .find({ answers: { $exists: false }, lockedBy: { $in: [user_Id, null] } })
                 .sort({ created_at: 1 })
                 .limit(limit).toArray();
+            let count = 0;
+            const assignedDataCount = yield db.collection("faq_questions").find({ lockedBy: user_Id }).toArray();
             if (questions_list.length === 0) {
                 throw new error_1.default(500, "NO DATA FOUND", "No data is there");
             }
+            if (assignedDataCount.length !== 0) {
+                count = assignedDataCount.length;
+            }
+            else {
+                count = questions_list.length;
+            }
             const questionIds = questions_list.map(q => q._id);
-            ;
             const lockingQuestions = yield db.collection("faq_questions").updateMany({ _id: { $in: questionIds } }, { $set: { lockedBy: user_Id, lockedAt: new Date() } });
             if (!lockingQuestions.acknowledged) {
-                throw new error_1.default(500, "Failed To Lock", `Something went wrong while locking the questions under a given ${user_Id}`);
+                throw new error_1.default(500, "Failed To Lock", `Something went wrong while locking questions for user ${user_Id}.`);
             }
-            return questions_list;
+            return { questions_list, count };
         });
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    static deleteUnAnsweredQuestions(ids) {
+    static deleteUnAnsweredQuestions(user_ID) {
         return __awaiter(this, void 0, void 0, function* () {
             const db = yield database_1.client.db("master");
-            const deleteData = yield db.collection("faq_questions").deleteMany({ question_id: { $in: ids } });
+            const count = yield db.collection("faq_questions").find({ lockedBy: user_ID }).toArray();
+            if (count.length === 0) {
+                throw new error_1.default(500, "FAILURE", "No data available for deletion as no questions are assigned to you.");
+            }
+            const deleteData = yield db.collection("faq_questions").deleteMany({ lockedBy: user_ID });
+            if (!deleteData.acknowledged) {
+                return false;
+            }
+            return true;
         });
     }
 }
