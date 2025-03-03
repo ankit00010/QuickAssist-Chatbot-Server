@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import { client } from "../../../config/database";
 import ThrowError from "../../../middleware/error";
-import { editFields } from "../models/faq_model";
+import { editFields } from "../../admin/models/faq_model";
 import ChatBotUtils from "../../../utils/chatbot_utils";
 
 class WhatsappChatbotRepository {

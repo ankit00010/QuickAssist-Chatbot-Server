@@ -1,6 +1,7 @@
+import { WithId } from "mongodb";
 import { client } from "../../../config/database";
 import ThrowError from "../../../middleware/error";
-import { editFields } from "../../chatbot/models/faq_model";
+import { editFields } from "../models/faq_model";
 import { UserDetails, UserProps } from "../models/user_model";
 
 class AdminRepository {
@@ -173,22 +174,28 @@ class AdminRepository {
 
     static async getUnAnsweredData(
         limit: number, user_Id: string
-    ): Promise<any[]> {
+    ): Promise<{ questions_list: any[]; count: number | 0 }> {
         const db = await client.db("master");
-
         const questions_list = await db.collection("faq_questions")
             .find({ answers: { $exists: false }, lockedBy: { $in: [user_Id, null] } })
             .sort({ created_at: 1 })
             .limit(limit).toArray();
-
-
+        let count = 0;
+        const assignedDataCount = await db.collection("faq_questions").find({ lockedBy: user_Id }).toArray();
 
         if (questions_list.length === 0) {
             throw new ThrowError(500, "NO DATA FOUND", "No data is there");
         }
 
 
-        const questionIds = questions_list.map(q => q._id);;
+        if (assignedDataCount.length !== 0) {
+            count = assignedDataCount.length;
+        } else {
+            count = questions_list.length;
+        }
+
+
+        const questionIds = questions_list.map(q => q._id);
 
         const lockingQuestions = await db.collection("faq_questions").updateMany(
             { _id: { $in: questionIds } },
@@ -196,23 +203,35 @@ class AdminRepository {
         )
 
         if (!lockingQuestions.acknowledged) {
-            throw new ThrowError(500, "Failed To Lock", `Something went wrong while locking the questions under a given ${user_Id}`)
+            throw new ThrowError(500, "Failed To Lock", `Something went wrong while locking questions for user ${user_Id}.`)
         }
-        return questions_list;
 
+        return { questions_list, count };
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
     static async deleteUnAnsweredQuestions(
-        ids: string[]
-    ): Promise<any> {
+        user_ID: string
+    ): Promise<boolean> {
         const db = await client.db("master");
 
 
-        const deleteData = await db.collection("faq_questions").deleteMany({ question_id: { $in: ids } });
+        const count = await db.collection("faq_questions").find({ lockedBy: user_ID }).toArray();
 
+        if (count.length === 0) {
+            throw new ThrowError(500, "FAILURE", "No data available for deletion as no questions are assigned to you.");
+
+        }
+
+        const deleteData = await db.collection("faq_questions").deleteMany({ lockedBy: user_ID });
+
+
+        if (!deleteData.acknowledged) {
+            return false
+        }
+        return true
     }
 
 }

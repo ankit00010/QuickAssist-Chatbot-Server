@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { client } from "../../../config/database";
-import FaqInfo from "../../chatbot/models/faq_model";
+import FaqInfo, { FaqInfoProps } from "../models/faq_model";
 import ThrowError from "../../../middleware/error";
 import Validatiors from "../../chatbot/validators/fields_validation";
 import ChatBotUtils from "../../../utils/chatbot_utils";
@@ -12,37 +12,41 @@ class AdminClassController {
 
 
 
-    static async addData(
-        req: Request,
-        res: Response
-    ): Promise<any> {
+    static async addData(req: Request, res: Response): Promise<any> {
         try {
-
-
             console.log("Adding Data...");
-            const { question, answer, keywords, context } = req.body;
-            console.log(req.body);
+            const faqs: FaqInfoProps[] = req.body.transformedFAQs;
+            console.log("faqs  are ", faqs);
+
+            // Validate the request data
+            const validationErrors = FaqInfo.validateMultipleFields(faqs);
+            if (validationErrors.length > 0) {
+                return res.status(400).json({ code: 400, title: "VALIDATION ERROR", message: validationErrors });
+            }
 
             const db = client.db("master");
-
-            new FaqInfo({ question, answer, keywords, context });
-
             const totalDocs = await db.collection("faq_info").countDocuments();
-            const id = ChatBotUtils.generateDocumentId(totalDocs);
-            const result = await db.collection("faq_info").insertOne({
-                faq_id: id,
-                question: question.toLowerCase(),
-                answer,
-                keywords,
-                context,
-                created_at: new Date(),
-                updated_at: new Date()
-            });
+            const date = new Date();
+
+            // Map FAQs for batch insertion
+            const faqsArray = faqs.map((faq, index) => ({
+                faq_id: ChatBotUtils.generateDocumentId(totalDocs + index),
+                question: faq.question?.trim().toLowerCase() || "",
+                answer: faq.answer?.trim() || "",
+                keywords: Array.isArray(faq.keywords) ? faq.keywords : [],
+                context: faq.context?.trim() || "",
+                created_at: date,
+                updated_at: date
+            }));
+            console.log("FAQ DATA are ", faqsArray);
+
+            // Insert multiple or single FAQ(s)
+            const result = faqs.length > 1
+                ? await db.collection("faq_info").insertMany(faqsArray)
+                : await db.collection("faq_info").insertOne(faqsArray[0]);
+
             if (!result.acknowledged) {
-                return res.status(500).json({
-                    title: "FAILURE",
-                    message: "Failed to add the data in a database",
-                });
+                return res.status(500).json({ title: "FAILURE", message: "Failed to add data to the database" });
             }
 
             return res.status(200).json({ code: 200, title: "SUCCESS", message: "Data Added Successfully!!!" });
@@ -70,6 +74,12 @@ class AdminClassController {
             }
         }
     }
+
+
+
+
+
+
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -417,14 +427,20 @@ class AdminClassController {
         try {
 
             const { limit, user_Id } = req.body;
+            console.log("Limit Value", typeof limit);
+            console.log("User ID", typeof user_Id);
 
+            const transformedLimit = Math.ceil(parseInt(limit, 10));
 
-            if (!limit && user_Id) {
+            if (!limit && !user_Id) {
                 throw new ThrowError(400, "INVALID REQUEST", "Both 'total_questions_asked' and 'user_ID' parameters are missing.");
             }
 
 
-            const getData = await AdminRepository.getUnAnsweredData(limit, user_Id);
+            const getData = await AdminRepository.getUnAnsweredData(transformedLimit, user_Id);
+
+
+            console.log("Data value received is ", getData);
 
             return res.status(200).json({ code: 200, tite: "SUCCESS", message: "Data received", data: getData });
 
@@ -455,47 +471,57 @@ class AdminClassController {
 
 
     static async deleteQuestions(
-            req: Request,
-            res: Response
-          ): Promise<any> {
-            try {
-                
-                const {ids}=req.body;
+        req: Request,
+        res: Response
+    ): Promise<any> {
+        try {
+
+            const id = req.params.id;
 
 
-                if (ids.length===0) {
-                    throw new ThrowError(400,"EMPTY FIELDS","IDS provided are either empty or undefined");
-                }
+            console.log('The id got is ', id);
 
 
-                const deleteData=await AdminRepository.deleteUnAnsweredQuestions(ids);
-
-
-            }  catch (error) {
-                if (error instanceof ThrowError) {
-                    res.status(error.code).json({
-                        code: error.code,
-                        title: error.title,
-                        message: error.message,
-                    });
-                } else if (error instanceof Error) {
-                    // Handle unexpected errors
-                    res.status(500).json({
-                        code: 500,
-                        title: "Internal Server Error",
-                        message: error.message,
-                    });
-                } else {
-                    // Handle unknown errors
-                    res.status(500).json({
-                        code: 500,
-                        title: "Internal Server Error",
-                        message: "An unknown error occurred",
-                    });
-                }
+            if (!id) {
+                throw new ThrowError(400, "EMPTY FIELDS", "IDS provided are either empty or undefined");
             }
+
+
+            const deleteData = await AdminRepository.deleteUnAnsweredQuestions(id);
+
+
+            if (!deleteData) {
+                throw new ThrowError(500, "FAILURE", "Failed to delete the data");
             }
-        
+
+            return res.status(200).json({ code: 200, tite: "SUCCESS", message: "Deleted previous Data successfully" });
+
+
+        } catch (error) {
+            if (error instanceof ThrowError) {
+                res.status(error.code).json({
+                    code: error.code,
+                    title: error.title,
+                    message: error.message,
+                });
+            } else if (error instanceof Error) {
+                // Handle unexpected errors
+                res.status(500).json({
+                    code: 500,
+                    title: "Internal Server Error",
+                    message: error.message,
+                });
+            } else {
+                // Handle unknown errors
+                res.status(500).json({
+                    code: 500,
+                    title: "Internal Server Error",
+                    message: "An unknown error occurred",
+                });
+            }
+        }
+    }
+
 
 }
 export default AdminClassController;

@@ -77,6 +77,30 @@ class FaqInfo {
             throw new ThrowError(400, "Validation Error", "At least one valid keyword is required.");
         }
     }
-}
 
+
+    static validateMultipleFields(faqs: FaqInfoProps[]): errorsProps[] {
+        return faqs
+            .map((faq, index) => {
+                const errors: errorsProps = {};
+    
+                if (!faq.question?.trim()) {
+                    errors.question_error = `FAQ ${index + 1}: Question is required`;
+                }
+                if (!faq.answer?.trim()) {
+                    errors.answer_error = `FAQ ${index + 1}: Answer is required`;
+                }
+                if (!faq.context?.trim()) {
+                    errors.context_error = `FAQ ${index + 1}: Context is required`;
+                }
+                if (!Array.isArray(faq.keywords) || faq.keywords.length === 0 || faq.keywords.some(k => !k.trim())) {
+                    errors.keywords_error = `FAQ ${index + 1}: At least one valid keyword is required`;
+                }
+    
+                return Object.keys(errors).length > 0 ? errors : null;
+            })
+            .filter((error): error is errorsProps => error !== null); // Type assertion to filter out null
+    }
+    
+}
 export default FaqInfo;

@@ -14,6 +14,6 @@ admin_routes.post("/add-data", admin_controller_1.default.addData);
 admin_routes.put("/edit-data/:id", admin_controller_1.default.editData);
 admin_routes.delete("/delete-data/:id", admin_controller_1.default.deleteData);
 admin_routes.post("/admin-message", admin_controller_1.default.adminMessage);
-admin_routes.get("/questions/unanswered", admin_controller_1.default.questionsUnAnswered);
-admin_routes.delete("/questions/unanswered/delete", admin_controller_1.default.deleteQuestions);
+admin_routes.post("/questions/unanswered", admin_controller_1.default.questionsUnAnswered);
+admin_routes.delete("/questions/unanswered/delete/:id", admin_controller_1.default.deleteQuestions);
 exports.default = admin_routes;

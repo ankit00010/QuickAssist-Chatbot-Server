@@ -13,7 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const database_1 = require("../../../config/database");
-const faq_model_1 = __importDefault(require("../../chatbot/models/faq_model"));
+const faq_model_1 = __importDefault(require("../models/faq_model"));
 const error_1 = __importDefault(require("../../../middleware/error"));
 const fields_validation_1 = __importDefault(require("../../chatbot/validators/fields_validation"));
 const chatbot_utils_1 = __importDefault(require("../../../utils/chatbot_utils"));
@@ -24,26 +24,36 @@ class AdminClassController {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 console.log("Adding Data...");
-                const { question, answer, keywords, context } = req.body;
-                console.log(req.body);
+                const faqs = req.body.transformedFAQs;
+                console.log("faqs  are ", faqs);
+                // Validate the request data
+                const validationErrors = faq_model_1.default.validateMultipleFields(faqs);
+                if (validationErrors.length > 0) {
+                    return res.status(400).json({ code: 400, title: "VALIDATION ERROR", message: validationErrors });
+                }
                 const db = database_1.client.db("master");
-                new faq_model_1.default({ question, answer, keywords, context });
                 const totalDocs = yield db.collection("faq_info").countDocuments();
-                const id = chatbot_utils_1.default.generateDocumentId(totalDocs);
-                const result = yield db.collection("faq_info").insertOne({
-                    faq_id: id,
-                    question: question.toLowerCase(),
-                    answer,
-                    keywords,
-                    context,
-                    created_at: new Date(),
-                    updated_at: new Date()
-                });
-                if (!result.acknowledged) {
-                    return res.status(500).json({
-                        title: "FAILURE",
-                        message: "Failed to add the data in a database",
+                const date = new Date();
+                // Map FAQs for batch insertion
+                const faqsArray = faqs.map((faq, index) => {
+                    var _a, _b, _c;
+                    return ({
+                        faq_id: chatbot_utils_1.default.generateDocumentId(totalDocs + index),
+                        question: ((_a = faq.question) === null || _a === void 0 ? void 0 : _a.trim().toLowerCase()) || "",
+                        answer: ((_b = faq.answer) === null || _b === void 0 ? void 0 : _b.trim()) || "",
+                        keywords: Array.isArray(faq.keywords) ? faq.keywords : [],
+                        context: ((_c = faq.context) === null || _c === void 0 ? void 0 : _c.trim()) || "",
+                        created_at: date,
+                        updated_at: date
                     });
+                });
+                console.log("FAQ DATA are ", faqsArray);
+                // Insert multiple or single FAQ(s)
+                const result = faqs.length > 1
+                    ? yield db.collection("faq_info").insertMany(faqsArray)
+                    : yield db.collection("faq_info").insertOne(faqsArray[0]);
+                if (!result.acknowledged) {
+                    return res.status(500).json({ title: "FAILURE", message: "Failed to add data to the database" });
                 }
                 return res.status(200).json({ code: 200, title: "SUCCESS", message: "Data Added Successfully!!!" });
             }
@@ -352,10 +362,14 @@ class AdminClassController {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const { limit, user_Id } = req.body;
-                if (!limit && user_Id) {
+                console.log("Limit Value", typeof limit);
+                console.log("User ID", typeof user_Id);
+                const transformedLimit = Math.ceil(parseInt(limit, 10));
+                if (!limit && !user_Id) {
                     throw new error_1.default(400, "INVALID REQUEST", "Both 'total_questions_asked' and 'user_ID' parameters are missing.");
                 }
-                const getData = yield admin_repository_1.default.getUnAnsweredData(limit, user_Id);
+                const getData = yield admin_repository_1.default.getUnAnsweredData(transformedLimit, user_Id);
+                console.log("Data value received is ", getData);
                 return res.status(200).json({ code: 200, tite: "SUCCESS", message: "Data received", data: getData });
             }
             catch (error) {
@@ -388,11 +402,16 @@ class AdminClassController {
     static deleteQuestions(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const { ids } = req.body;
-                if (ids.length === 0) {
+                const id = req.params.id;
+                console.log('The id got is ', id);
+                if (!id) {
                     throw new error_1.default(400, "EMPTY FIELDS", "IDS provided are either empty or undefined");
                 }
-                const deleteData = yield admin_repository_1.default.deleteUnAnsweredQuestions(ids);
+                const deleteData = yield admin_repository_1.default.deleteUnAnsweredQuestions(id);
+                if (!deleteData) {
+                    throw new error_1.default(500, "FAILURE", "Failed to delete the data");
+                }
+                return res.status(200).json({ code: 200, tite: "SUCCESS", message: "Deleted previous Data successfully" });
             }
             catch (error) {
                 if (error instanceof error_1.default) {
