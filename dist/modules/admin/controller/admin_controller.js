@@ -399,6 +399,7 @@ class AdminClassController {
             }
         });
     }
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     static deleteQuestions(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -412,6 +413,51 @@ class AdminClassController {
                     throw new error_1.default(500, "FAILURE", "Failed to delete the data");
                 }
                 return res.status(200).json({ code: 200, tite: "SUCCESS", message: "Deleted previous Data successfully" });
+            }
+            catch (error) {
+                if (error instanceof error_1.default) {
+                    res.status(error.code).json({
+                        code: error.code,
+                        title: error.title,
+                        message: error.message,
+                    });
+                }
+                else if (error instanceof Error) {
+                    // Handle unexpected errors
+                    res.status(500).json({
+                        code: 500,
+                        title: "Internal Server Error",
+                        message: error.message,
+                    });
+                }
+                else {
+                    // Handle unknown errors
+                    res.status(500).json({
+                        code: 500,
+                        title: "Internal Server Error",
+                        message: "An unknown error occurred",
+                    });
+                }
+            }
+        });
+    }
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    static usersList(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const page = parseInt(req.query.page) || 1;
+                const limit = parseInt(req.query.limit) || 5;
+                const skip = (page - 1) * limit;
+                const getUserDetails = yield admin_repository_1.default.usersData(limit, skip);
+                res.status(200).json({
+                    code: 200,
+                    title: "SUCCESS",
+                    message: "Data retreived Successfully",
+                    data: getUserDetails.usersData,
+                    totalPages: getUserDetails.totalPages,
+                    totalItems: getUserDetails.totalItems,
+                    currentPage: page
+                });
             }
             catch (error) {
                 if (error instanceof error_1.default) {

@@ -148,5 +148,35 @@ class AdminRepository {
             return true;
         });
     }
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    static usersData(limit, skip) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const db = yield database_1.client.db("master");
+            const getUsersData = yield db.collection("user_data").find({}).skip(skip).limit(limit).toArray();
+            console.log(getUsersData);
+            const getTotalCount = yield db.collection("user_data")
+                .countDocuments({
+                user_id: { $exists: true },
+                phone_number: { $exists: true },
+                name: { $exists: true }
+            });
+            let totalPages = 0;
+            console.log("The total Count is => ", getTotalCount);
+            if (getTotalCount > 0) {
+                totalPages = Math.ceil(getTotalCount / limit);
+            }
+            else {
+                totalPages = 1;
+            }
+            if (!getUsersData || getUsersData.length === 0) {
+                throw new error_1.default(500, "NO DATA FOUND", "No Users Data Available");
+            }
+            return {
+                usersData: getUsersData,
+                totalPages,
+                totalItems: getTotalCount
+            };
+        });
+    }
 }
 exports.default = AdminRepository;

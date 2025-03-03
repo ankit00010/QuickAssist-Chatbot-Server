@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { query, Request, Response } from "express";
 import { client } from "../../../config/database";
 import FaqInfo, { FaqInfoProps } from "../models/faq_model";
 import ThrowError from "../../../middleware/error";
@@ -468,6 +468,7 @@ class AdminClassController {
             }
         }
     }
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
     static async deleteQuestions(
@@ -522,6 +523,59 @@ class AdminClassController {
         }
     }
 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+    static async usersList(
+        req: Request,
+        res: Response
+    ): Promise<any> {
+        try {
+
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 5;
+            const skip = (page - 1) * limit;
+
+
+
+            const getUserDetails = await AdminRepository.usersData(limit, skip);
+
+
+            res.status(200).json({
+                code: 200,
+                title: "SUCCESS",
+                message: "Data retreived Successfully",
+                data: getUserDetails.usersData,
+                totalPages: getUserDetails.totalPages,
+                totalItems: getUserDetails.totalItems,
+                currentPage: page
+            })
+
+        } catch (error) {
+            if (error instanceof ThrowError) {
+                res.status(error.code).json({
+                    code: error.code,
+                    title: error.title,
+                    message: error.message,
+                });
+            } else if (error instanceof Error) {
+                // Handle unexpected errors
+                res.status(500).json({
+                    code: 500,
+                    title: "Internal Server Error",
+                    message: error.message,
+                });
+            } else {
+                // Handle unknown errors
+                res.status(500).json({
+                    code: 500,
+                    title: "Internal Server Error",
+                    message: "An unknown error occurred",
+                });
+            }
+        }
+    }
 
 }
 export default AdminClassController;

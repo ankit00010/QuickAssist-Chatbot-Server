@@ -234,6 +234,63 @@ class AdminRepository {
         return true
     }
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    static async usersData(
+        limit: number, skip: number
+    ): Promise<any> {
+
+
+
+        const db = await client.db("master");
+
+
+        const getUsersData = await db.collection("user_data").find({}).skip(skip).limit(limit).toArray();
+
+
+
+        console.log(getUsersData);
+        
+
+
+
+        const getTotalCount = await db.collection("user_data")
+            .countDocuments({
+                user_id: { $exists: true },
+                phone_number: { $exists: true },
+                name: { $exists: true }
+            });
+
+        let totalPages = 0
+        console.log("The total Count is => ", getTotalCount);
+
+        if (getTotalCount>0) {
+            totalPages = Math.ceil(getTotalCount / limit)
+
+        } else {
+            totalPages = 1;
+        }
+
+        if (!getUsersData || getUsersData.length === 0) {
+            throw new ThrowError(500, "NO DATA FOUND", "No Users Data Available");
+        }
+
+
+        return {
+            usersData: getUsersData,
+            totalPages,
+            totalItems: getTotalCount
+
+        }
+
+
+
+
+    }
+
+
+
 }
 
 
