@@ -2,14 +2,51 @@ import { Request, Response } from "express";
 import { client } from "../../../config/database";
 import FaqInfo, { FaqInfoProps } from "../models/faq_model";
 import ThrowError from "../../../middleware/error";
-import Validatiors from "../../chatbot/validators/fields_validation";
 import ChatBotUtils from "../../../utils/chatbot_utils";
 import AdminRepository from "../repository/admin_repository";
 import WhatsappService from "../../../services/chatbot_services";
+import Validatiors from "../../chatbot/validators/fields_validation";
 
 class AdminClassController {
 
 
+
+
+
+    static async getDashboardDetails(
+        req: Request,
+        res: Response
+    ): Promise<any> {
+        try {
+
+            const details = await AdminRepository.dashboardDetailsRepo();
+
+
+            return res.status(200).json({ code: 200, title: "SUCCESS", message: "RETRIEVED DATA SUCCESSFULLY!", result: details })
+        } catch (error) {
+            if (error instanceof ThrowError) {
+                res.status(error.code).json({
+                    code: error.code,
+                    title: error.title,
+                    message: error.message,
+                });
+            } else if (error instanceof Error) {
+                // Handle unexpected errors
+                res.status(500).json({
+                    code: 500,
+                    title: "Internal Server Error",
+                    message: error.message,
+                });
+            } else {
+                // Handle unknown errors
+                res.status(500).json({
+                    code: 500,
+                    title: "Internal Server Error",
+                    message: "An unknown error occurred",
+                });
+            }
+        }
+    }
 
 
     static async addData(req: Request, res: Response): Promise<any> {
@@ -101,10 +138,10 @@ class AdminClassController {
             if (!id) {
                 throw new ThrowError(404, "Not Found", "No id provided");
             }
-            const validateFields = Validatiors.validateFields(fields);
+            const validateFields = Validatiors.validateFields(fields)
 
             if (validateFields) {
-                return res.status(400).json({ status: 400, title: "Validation Error", message: validateFields })
+                return res.status(400).json({ status: 400, title: "Validation Error" })
             }
 
             console.log("After Validation status", validateFields);
@@ -365,7 +402,7 @@ class AdminClassController {
             }
 
             const BATCH_SIZE = 10;
-            const totalUsers = await AdminRepository.getUsersCount(message);
+            const totalUsers = await AdminRepository.getUsersCount();
 
             if (totalUsers <= 0) {
                 return res.status(200).json({
@@ -468,6 +505,7 @@ class AdminClassController {
             }
         }
     }
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
     static async deleteQuestions(
@@ -522,6 +560,59 @@ class AdminClassController {
         }
     }
 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+    static async usersList(
+        req: Request,
+        res: Response
+    ): Promise<any> {
+        try {
+
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 5;
+            const skip = (page - 1) * limit;
+
+
+
+            const getUserDetails = await AdminRepository.usersData(limit, skip);
+
+
+            res.status(200).json({
+                code: 200,
+                title: "SUCCESS",
+                message: "Data retreived Successfully",
+                data: getUserDetails.usersData,
+                totalPages: getUserDetails.totalPages,
+                totalItems: getUserDetails.totalItems,
+                currentPage: page
+            })
+
+        } catch (error) {
+            if (error instanceof ThrowError) {
+                res.status(error.code).json({
+                    code: error.code,
+                    title: error.title,
+                    message: error.message,
+                });
+            } else if (error instanceof Error) {
+                // Handle unexpected errors
+                res.status(500).json({
+                    code: 500,
+                    title: "Internal Server Error",
+                    message: error.message,
+                });
+            } else {
+                // Handle unknown errors
+                res.status(500).json({
+                    code: 500,
+                    title: "Internal Server Error",
+                    message: "An unknown error occurred",
+                });
+            }
+        }
+    }
 
 }
 export default AdminClassController;

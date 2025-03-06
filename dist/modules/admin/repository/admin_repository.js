@@ -28,6 +28,56 @@ class AdminRepository {
             return true;
         });
     }
+    static dashboardDetailsRepo() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const db = yield database_1.client.db("master");
+            //TOATAL USERS 
+            const toatlUsers = yield db.collection("user_data").countDocuments();
+            //TOTAL FAQS
+            const totalFAQs = yield db.collection("faq_info").countDocuments();
+            //TOTAL QUESTIONS
+            const totalUnAnsweredQuestions = yield db.collection("faq_questions").countDocuments();
+            //FAQ DATA BASED ON THE CATEGORIES
+            const getContextLists = yield db.collection("faq_categories").aggregate([
+                {
+                    $group: {
+                        _id: null,
+                        context_lists: { $addToSet: "$context" } // Collecting unique context values
+                    }
+                },
+                {
+                    $project: {
+                        _id: 0, // Removing _id
+                        context_lists: 1
+                    }
+                }
+            ]).toArray();
+            const contextListArray = getContextLists.length > 0 ? getContextLists[0].context_lists : [];
+            console.log("Context lists are ", contextListArray);
+            const counterLists = yield db.collection("faq_info").aggregate([
+                {
+                    $group: {
+                        _id: "$context",
+                        count: { $sum: 1 }
+                    }
+                }
+            ]).toArray();
+            const contextWithCounters = counterLists.length > 0 ? counterLists : [];
+            // console.log("Context with counter lists => ", contextWithCounters);
+            const counterMap = new Map(contextWithCounters.map(item => [item._id, item.count]));
+            const finalResult = contextListArray.map(label => ({
+                label,
+                count: counterMap.get(label) || 0
+            }));
+            console.log("GRAPH DATA =>", finalResult);
+            return {
+                totalFAQs,
+                toatlUsers,
+                totalUnAnsweredQuestions,
+                finalResult,
+            };
+        });
+    }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Update Data function
     static updateData(id, field) {
@@ -78,7 +128,7 @@ class AdminRepository {
         });
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    static getUsersCount(message) {
+    static getUsersCount() {
         return __awaiter(this, void 0, void 0, function* () {
             const db = yield database_1.client.db("master");
             const count = yield db.collection("user_data").countDocuments();
@@ -146,6 +196,36 @@ class AdminRepository {
                 return false;
             }
             return true;
+        });
+    }
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    static usersData(limit, skip) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const db = yield database_1.client.db("master");
+            const getUsersData = yield db.collection("user_data").find({}).skip(skip).limit(limit).toArray();
+            console.log(getUsersData);
+            const getTotalCount = yield db.collection("user_data")
+                .countDocuments({
+                user_id: { $exists: true },
+                phone_number: { $exists: true },
+                name: { $exists: true }
+            });
+            let totalPages = 0;
+            console.log("The total Count is => ", getTotalCount);
+            if (getTotalCount > 0) {
+                totalPages = Math.ceil(getTotalCount / limit);
+            }
+            else {
+                totalPages = 1;
+            }
+            if (!getUsersData || getUsersData.length === 0) {
+                throw new error_1.default(500, "NO DATA FOUND", "No Users Data Available");
+            }
+            return {
+                usersData: getUsersData,
+                totalPages,
+                totalItems: getTotalCount
+            };
         });
     }
 }

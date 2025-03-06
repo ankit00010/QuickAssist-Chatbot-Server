@@ -1,8 +1,7 @@
-import { WithId } from "mongodb";
 import { client } from "../../../config/database";
 import ThrowError from "../../../middleware/error";
 import { editFields } from "../models/faq_model";
-import { UserDetails, UserProps } from "../models/user_model";
+import { UserDetails } from "../models/user_model";
 
 class AdminRepository {
 
@@ -30,11 +29,93 @@ class AdminRepository {
 
     }
 
+    static async dashboardDetailsRepo(
+
+    ): Promise<{
+        totalFAQs: number,
+        toatlUsers: number,
+        totalUnAnsweredQuestions: number,
+        finalResult: { label: string, count: number }[],
+    }> {
+
+
+        const db = await client.db("master");
+
+        //TOATAL USERS 
+        const toatlUsers = await db.collection("user_data").countDocuments();
+        //TOTAL FAQS
+        const totalFAQs = await db.collection("faq_info").countDocuments();
+        //TOTAL QUESTIONS
+        const totalUnAnsweredQuestions = await db.collection("faq_questions").countDocuments();
+
+        //FAQ DATA BASED ON THE CATEGORIES
+        const getContextLists = await db.collection("faq_categories").aggregate([
+            {
+                $group: {
+                    _id: null,
+                    context_lists: { $addToSet: "$context" } // Collecting unique context values
+                }
+            },
+            {
+                $project: {
+                    _id: 0, // Removing _id
+                    context_lists: 1
+                }
+            }
+        ]).toArray() as { context_lists: string[] }[];
+
+
+        const contextListArray = getContextLists.length > 0 ? getContextLists[0].context_lists : []
+        console.log("Context lists are ", contextListArray);
+
+
+
+
+        const counterLists = await db.collection("faq_info").aggregate<{ _id: string; count: number }>([
+            {
+                $group: {
+                    _id: "$context",
+                    count: { $sum: 1 }
+                }
+            }
+        ]).toArray();
+
+
+        const contextWithCounters: { _id: string; count: number }[] = counterLists.length > 0 ? counterLists : []
+        // console.log("Context with counter lists => ", contextWithCounters);
+
+
+        const counterMap = new Map(contextWithCounters.map(item => [item._id, item.count]));
+
+        const finalResult = contextListArray.map(label => ({
+            label,
+            count: counterMap.get(label) || 0
+        }));
+
+
+        console.log("GRAPH DATA =>", finalResult);
+
+
+        return {
+
+            totalFAQs,
+            toatlUsers,
+            totalUnAnsweredQuestions,
+            finalResult,
+
+        }
+
+
+
+
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
     // Update Data function
+
+
 
 
 
@@ -114,7 +195,6 @@ class AdminRepository {
 
 
     static async getUsersCount(
-        message: string,
     ): Promise<any> {
 
         const db = await client.db("master");
@@ -233,6 +313,62 @@ class AdminRepository {
         }
         return true
     }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    static async usersData(
+        limit: number, skip: number
+    ): Promise<any> {
+
+
+
+        const db = await client.db("master");
+
+
+        const getUsersData = await db.collection("user_data").find({}).skip(skip).limit(limit).toArray();
+
+
+        console.log(getUsersData);
+
+
+
+
+        const getTotalCount = await db.collection("user_data")
+            .countDocuments({
+                user_id: { $exists: true },
+                phone_number: { $exists: true },
+                name: { $exists: true }
+            });
+
+        let totalPages = 0
+        console.log("The total Count is => ", getTotalCount);
+
+        if (getTotalCount > 0) {
+            totalPages = Math.ceil(getTotalCount / limit)
+
+        } else {
+            totalPages = 1;
+        }
+
+        if (!getUsersData || getUsersData.length === 0) {
+            throw new ThrowError(500, "NO DATA FOUND", "No Users Data Available");
+        }
+
+
+        return {
+            usersData: getUsersData,
+            totalPages,
+            totalItems: getTotalCount
+
+        }
+
+
+
+
+    }
+
+
 
 }
 

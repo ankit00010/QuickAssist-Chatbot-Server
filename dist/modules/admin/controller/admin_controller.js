@@ -15,11 +15,44 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const database_1 = require("../../../config/database");
 const faq_model_1 = __importDefault(require("../models/faq_model"));
 const error_1 = __importDefault(require("../../../middleware/error"));
-const fields_validation_1 = __importDefault(require("../../chatbot/validators/fields_validation"));
 const chatbot_utils_1 = __importDefault(require("../../../utils/chatbot_utils"));
 const admin_repository_1 = __importDefault(require("../repository/admin_repository"));
 const chatbot_services_1 = __importDefault(require("../../../services/chatbot_services"));
+const fields_validation_1 = __importDefault(require("../../chatbot/validators/fields_validation"));
 class AdminClassController {
+    static getDashboardDetails(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const details = yield admin_repository_1.default.dashboardDetailsRepo();
+                return res.status(200).json({ code: 200, title: "SUCCESS", message: "RETRIEVED DATA SUCCESSFULLY!", result: details });
+            }
+            catch (error) {
+                if (error instanceof error_1.default) {
+                    res.status(error.code).json({
+                        code: error.code,
+                        title: error.title,
+                        message: error.message,
+                    });
+                }
+                else if (error instanceof Error) {
+                    // Handle unexpected errors
+                    res.status(500).json({
+                        code: 500,
+                        title: "Internal Server Error",
+                        message: error.message,
+                    });
+                }
+                else {
+                    // Handle unknown errors
+                    res.status(500).json({
+                        code: 500,
+                        title: "Internal Server Error",
+                        message: "An unknown error occurred",
+                    });
+                }
+            }
+        });
+    }
     static addData(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -97,7 +130,7 @@ class AdminClassController {
                 }
                 const validateFields = fields_validation_1.default.validateFields(fields);
                 if (validateFields) {
-                    return res.status(400).json({ status: 400, title: "Validation Error", message: validateFields });
+                    return res.status(400).json({ status: 400, title: "Validation Error" });
                 }
                 console.log("After Validation status", validateFields);
                 const findData = yield admin_repository_1.default.findDataById(id);
@@ -312,7 +345,7 @@ class AdminClassController {
                     throw new error_1.default(400, "VALIDATION ERROR", "EMPTY MESSAGE FIELD");
                 }
                 const BATCH_SIZE = 10;
-                const totalUsers = yield admin_repository_1.default.getUsersCount(message);
+                const totalUsers = yield admin_repository_1.default.getUsersCount();
                 if (totalUsers <= 0) {
                     return res.status(200).json({
                         code: 200,
@@ -399,6 +432,7 @@ class AdminClassController {
             }
         });
     }
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     static deleteQuestions(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -412,6 +446,51 @@ class AdminClassController {
                     throw new error_1.default(500, "FAILURE", "Failed to delete the data");
                 }
                 return res.status(200).json({ code: 200, tite: "SUCCESS", message: "Deleted previous Data successfully" });
+            }
+            catch (error) {
+                if (error instanceof error_1.default) {
+                    res.status(error.code).json({
+                        code: error.code,
+                        title: error.title,
+                        message: error.message,
+                    });
+                }
+                else if (error instanceof Error) {
+                    // Handle unexpected errors
+                    res.status(500).json({
+                        code: 500,
+                        title: "Internal Server Error",
+                        message: error.message,
+                    });
+                }
+                else {
+                    // Handle unknown errors
+                    res.status(500).json({
+                        code: 500,
+                        title: "Internal Server Error",
+                        message: "An unknown error occurred",
+                    });
+                }
+            }
+        });
+    }
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    static usersList(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const page = parseInt(req.query.page) || 1;
+                const limit = parseInt(req.query.limit) || 5;
+                const skip = (page - 1) * limit;
+                const getUserDetails = yield admin_repository_1.default.usersData(limit, skip);
+                res.status(200).json({
+                    code: 200,
+                    title: "SUCCESS",
+                    message: "Data retreived Successfully",
+                    data: getUserDetails.usersData,
+                    totalPages: getUserDetails.totalPages,
+                    totalItems: getUserDetails.totalItems,
+                    currentPage: page
+                });
             }
             catch (error) {
                 if (error instanceof error_1.default) {
