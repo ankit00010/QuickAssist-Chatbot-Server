@@ -8,6 +8,7 @@ import { AuthMiddleware } from "../../../config/check_token";
 const admin_routes = Router();
 admin_routes.use(AuthMiddleware.authenticateToken);
 admin_routes.use(AuthMiddleware.isAdmin);
+admin_routes.get("/dashboard",AdminClassController.getDashboardDetails)
 admin_routes.get("/faqs",AdminClassController.getFaqs)
 admin_routes.post("/add-data", AdminClassController.addData);
 admin_routes.put("/edit-data/:id", AdminClassController.editData);
