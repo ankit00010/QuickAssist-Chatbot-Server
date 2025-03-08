@@ -35,6 +35,8 @@ The **WhatsApp-Chatbot** solves the problem of customers needing to wait for hum
 - **WhatsApp API**: Integration with WhatsApp Business API for user interaction
 - **AI Model (Future)**: AI and ML for training and improving chatbot responses
 
+## Screenshots ✨
+
 ## Installation 🛠️
 
 ### Prerequisites 📋
