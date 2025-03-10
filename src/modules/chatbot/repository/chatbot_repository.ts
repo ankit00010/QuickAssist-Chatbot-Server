@@ -67,17 +67,20 @@ class WhatsappChatbotRepository {
         const cleanedMessage = message.replace(/[^\w\s]/gi, '').toLowerCase();
 
         // Tokenize the cleaned message into individual words
-        const messageWords = cleanedMessage.split(/\s+/);
+
+
 
         // Perform the query using the $or operator to match either keywords or context
         const findData = await db.collection<any>("faq_info").findOne({
             $or: [
-                { question: messageWords },
-                { keywords: { $in: messageWords } }
+                { question: cleanedMessage },              // Exact question
+                { keywords: cleanedMessage },              // Exact phrase keyword
             ]
         });
         const total: number = await db.collection('faq_questions').countDocuments();
-        const question_id = ChatBotUtils.generateDocumentId(total)
+        const question_id = ChatBotUtils.generateDocumentId(total);
+
+
         // If no data is found, return a default response
         if (!findData) {
             await db.collection("faq_questions").insertOne({ question_id: question_id, question: cleanedMessage.toLowerCase() });
@@ -85,6 +88,9 @@ class WhatsappChatbotRepository {
         }
 
         // Return the found data
+
+        console.log("Data finded is =>", findData);
+
         return findData;
     }
 
