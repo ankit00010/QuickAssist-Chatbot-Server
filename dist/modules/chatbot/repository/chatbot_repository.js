@@ -57,12 +57,11 @@ class WhatsappChatbotRepository {
             // Clean the message: remove punctuation and convert to lowercase
             const cleanedMessage = message.replace(/[^\w\s]/gi, '').toLowerCase();
             // Tokenize the cleaned message into individual words
-            const messageWords = cleanedMessage.split(/\s+/);
             // Perform the query using the $or operator to match either keywords or context
             const findData = yield db.collection("faq_info").findOne({
                 $or: [
-                    { question: messageWords },
-                    { keywords: { $in: messageWords } }
+                    { question: cleanedMessage }, // Exact question
+                    { keywords: cleanedMessage }, // Exact phrase keyword
                 ]
             });
             const total = yield db.collection('faq_questions').countDocuments();
@@ -73,6 +72,7 @@ class WhatsappChatbotRepository {
                 return false;
             }
             // Return the found data
+            console.log("Data finded is =>", findData);
             return findData;
         });
     }

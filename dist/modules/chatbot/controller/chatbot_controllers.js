@@ -73,7 +73,7 @@ class WhatsappChatbot {
                         }
                         else {
                             // If a response is found, send the answer to the user
-                            console.log(getQueryAns);
+                            // console.log(getQueryAns);
                             const sendMessage = yield chatbot_services_1.default.sendCustomMessage(getQueryAns.answer, phoneNumber, userID);
                             console.log('Message sent successfully:', sendMessage);
                             // Check if the message was successfully sent
