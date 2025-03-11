@@ -1,5 +1,4 @@
 import nodemailer from 'nodemailer';
-import ThrowError from '../middleware/error';
 import jwt from "jsonwebtoken";
 class ChatBotUtils {
 
