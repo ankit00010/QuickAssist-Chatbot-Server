@@ -48,31 +48,30 @@ class WhatsappChatbotRepository {
     // fetch Query Answer
     static fetchFAQResponse(message) {
         return __awaiter(this, void 0, void 0, function* () {
-            // Connect to the "master" database
             const db = yield database_1.client.db("master");
-            // Throw an error if the message is empty
             if (!message) {
                 throw new error_1.default(404, "Not Found", "Message received is empty");
             }
-            // Clean the message: remove punctuation and convert to lowercase
             const cleanedMessage = message.replace(/[^\w\s]/gi, '').toLowerCase();
-            // Tokenize the cleaned message into individual words
-            // Perform the query using the $or operator to match either keywords or context
-            const findData = yield db.collection("faq_info").findOne({
-                $or: [
-                    { question: cleanedMessage }, // Exact question
-                    { keywords: cleanedMessage }, // Exact phrase keyword
-                ]
+            const words = cleanedMessage.split(/\s+/);
+            let findData = yield db.collection("faq_info").findOne({
+                $text: { $search: cleanedMessage }
             });
+            if (!findData) {
+                findData = yield db.collection("faq_info").findOne({
+                    $or: [
+                        { question: { $regex: cleanedMessage, $options: "i" } },
+                        { keywords: { $in: words } }
+                    ]
+                });
+            }
             const total = yield db.collection('faq_questions').countDocuments();
             const question_id = chatbot_utils_1.default.generateDocumentId(total);
-            // If no data is found, return a default response
             if (!findData) {
-                yield db.collection("faq_questions").insertOne({ question_id: question_id, question: cleanedMessage.toLowerCase() });
+                yield db.collection("faq_questions").insertOne({ question_id, question: cleanedMessage });
                 return false;
             }
-            // Return the found data
-            console.log("Data finded is =>", findData);
+            console.log("Data found:", findData);
             return findData;
         });
     }
