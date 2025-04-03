@@ -5,7 +5,7 @@
 **Project Name:** QuickAssist Chatbot  
 **Version:** 1.0
 
-The ** QuickAssist Chatbot  ** is an automated solution designed to provide customers with information related to a company, entirely through WhatsApp. The chatbot interacts with a database to provide instant responses to frequently asked questions (FAQs). Admins can manage FAQs through an admin platform built with Next.js and TypeScript. Users interact with the chatbot through WhatsApp, receiving real-time responses.
+The **QuickAssist Chatbot** is an automated solution designed to provide customers with information related to a company, entirely through WhatsApp. The chatbot interacts with a database to provide instant responses to frequently asked questions (FAQs). Admins can manage FAQs through an admin platform built with Next.js and TypeScript. Users interact with the chatbot through WhatsApp, receiving real-time responses.
 
 
 ## Problem Solved 🚀
