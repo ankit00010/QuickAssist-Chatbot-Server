@@ -54,17 +54,12 @@ class WhatsappChatbotRepository {
             }
             const cleanedMessage = message.replace(/[^\w\s]/gi, '').toLowerCase();
             const words = cleanedMessage.split(/\s+/);
-            let findData = yield db.collection("faq_info").findOne({
-                $text: { $search: cleanedMessage }
+            const findData = yield db.collection("faq_info").findOne({
+                $or: [
+                    { question: { $regex: cleanedMessage, $options: "i" } },
+                    { keywords: { $in: words } }
+                ]
             });
-            if (!findData) {
-                findData = yield db.collection("faq_info").findOne({
-                    $or: [
-                        { question: { $regex: cleanedMessage, $options: "i" } },
-                        { keywords: { $in: words } }
-                    ]
-                });
-            }
             const total = yield db.collection('faq_questions').countDocuments();
             const question_id = chatbot_utils_1.default.generateDocumentId(total);
             if (!findData) {
