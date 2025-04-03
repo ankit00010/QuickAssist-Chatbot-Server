@@ -66,18 +66,13 @@ class WhatsappChatbotRepository {
         const words = cleanedMessage.split(/\s+/); 
     
         
-        let findData = await db.collection("faq_info").findOne({
-            $text: { $search: cleanedMessage } 
-        });
-    
-        if (!findData) {
-            findData = await db.collection("faq_info").findOne({
+      
+          const  findData = await db.collection("faq_info").findOne({
                 $or: [
                     { question: { $regex: cleanedMessage, $options: "i" } }, 
                     { keywords: { $in: words } }
                 ]
             });
-        }
     
         const total: number = await db.collection('faq_questions').countDocuments();
         const question_id = ChatBotUtils.generateDocumentId(total);
