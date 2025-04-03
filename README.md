@@ -3,11 +3,17 @@
 ## Project Overview
 
 **Project Name:** QuickAssist Chatbot  
-**Version:** 1.0
-[![Live Preview](https://img.youtube.com/vi/ZYrZ032HY6E/0.jpg)](https://youtu.be/ZYrZ032HY6E)
-<iframe width="560" height="315" src="https://www.youtube.com/embed/ZYrZ032HY6E" frameborder="0" allowfullscreen></iframe>
+**Version:** 1.0  
+
+[![YouTube](https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/ZYrZ032HY6E)
 
 The **QuickAssist Chatbot** is an automated solution designed to provide customers with information related to a company, entirely through WhatsApp. The chatbot interacts with a database to provide instant responses to frequently asked questions (FAQs). Admins can manage FAQs through an admin platform built with Next.js and TypeScript. Users interact with the chatbot through WhatsApp, receiving real-time responses.
+
+
+
+https://github.com/user-attachments/assets/11f3e058-a069-43db-a331-48dad179781a
+ 
+
 
 
 
