@@ -37,6 +37,23 @@ The **WhatsApp-Chatbot** solves the problem of customers needing to wait for hum
 - **WhatsApp API**: Integration with WhatsApp Business API for user interaction
 - **AI Model (Future)**: AI and ML for training and improving chatbot responses
 
+## SYSTEM DESIGNS
+# WhatsApp Chatbot Event Flow Table
+
+| No. | Event | Trigger | Source | Activity | Response | Destination |
+|-----|-------|---------|--------|----------|----------|-------------|
+| 1 | User sends a message on WhatsApp | Message Received | User (WhatsApp) | Capture and parse incoming user message | Query the database for matching FAQ | WhatsApp Chatbot (Backend) |
+| 2 | Bot finds a matching FAQ | Message Parsed | Chatbot | Fetch answer from database | Send response back to user via WhatsApp | WhatsApp User |
+| 3 | Bot doesn't find a matching FAQ | No Match Found | Chatbot | Store question in "Unanswered Questions" | Send default message with options or notify for human help | WhatsApp User, Admin Panel |
+| 4 | Admin adds/edits FAQs | Form Submission | Admin Panel | Insert or update FAQ entry in the database | Confirm update to the admin | MongoDB |
+| 5 | Admin checks unanswered questions | View Page Load | Admin Panel | Fetch unanswered queries from database | Display list of unanswered user queries | Admin Panel UI |
+| 6 | Admin sends a manual reply to user | Send Button Clicked | Admin Panel | Send custom message to user via WhatsApp API | Deliver manual response to user | WhatsApp User |
+| 7 | User registers through initial message | First-time Message | WhatsApp User | Create new user entry in the database | Send welcome message or options | WhatsApp Chatbot (Backend) |
+| 8 | Admin trains the AI model (future) | Train Button Click | Admin Panel | Use unanswered questions and past chat data to train AI | Train AI model to improve future responses | AI Model |
+| 9 | System deploys updated AI model | Post-Training | System | Update chatbot with improved model | Reflect smarter response behavior | Chatbot Backend |
+| 10 | Admin views all users | View Users Clicked | Admin Panel | Fetch user data from database | Display user list with metadata | Admin Panel UI |
+
+
 ## Screenshots ✨
 ![image](https://github.com/user-attachments/assets/3f63c2d3-dd03-4364-a979-bcfb2048fcbe)
 
