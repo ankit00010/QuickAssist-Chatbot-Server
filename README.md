@@ -49,9 +49,7 @@ The **WhatsApp-Chatbot** solves the problem of customers needing to wait for hum
 | 5 | Admin checks unanswered questions | View Page Load | Admin Panel | Fetch unanswered queries from database | Display list of unanswered user queries | Admin Panel UI |
 | 6 | Admin sends a manual reply to user | Send Button Clicked | Admin Panel | Send custom message to user via WhatsApp API | Deliver manual response to user | WhatsApp User |
 | 7 | User registers through initial message | First-time Message | WhatsApp User | Create new user entry in the database | Send welcome message or options | WhatsApp Chatbot (Backend) |
-| 8 | Admin trains the AI model (future) | Train Button Click | Admin Panel | Use unanswered questions and past chat data to train AI | Train AI model to improve future responses | AI Model |
-| 9 | System deploys updated AI model | Post-Training | System | Update chatbot with improved model | Reflect smarter response behavior | Chatbot Backend |
-| 10 | Admin views all users | View Users Clicked | Admin Panel | Fetch user data from database | Display user list with metadata | Admin Panel UI |
+| 8 | Admin views all users | View Users Clicked | Admin Panel | Fetch user data from database | Display user list with metadata | Admin Panel UI |
 
 
 ## Screenshots ✨
